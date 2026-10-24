@@ -4,7 +4,7 @@ Read [GEMINI.md](GEMINI.md) completely before modifying this repository. It cont
 
 ## Seven operating rules
 
-1. **Branch before editing.** Never code or commit on `main`. Use a dedicated, literal branch such as `feat/mobile-login`, `fix/location-picker` or `docs/mobile-guidelines`. Check the working tree before switching; preserve others' changes.
+1. **Use the agreed feature branch.** Never code or commit on `main`. When starting a new feature from `main`, fetch and verify the latest `origin/main` before creating a descriptive branch. Stay on that branch for follow-up fixes. Do not create or switch branches merely because a prompt is complete; follow the user's branch instructions. Check the working tree before switching and preserve others' changes.
 2. **Keep work isolated.** Work inside `/home/andy/Projects/surios-ai-app`. Read or modify sibling projects only when the user authorizes it. Backend changes belong in the separate web repository and must be tracked explicitly.
 3. **Protect secrets.** Never stage credentials, real `.env` files, signing keys, tokens or private certificates. Verify `.gitignore`. `.env.example` may contain public placeholders only. Every `EXPO_PUBLIC_` value is public.
 4. **Preserve the mobile stack.** Use React Native, Expo, Expo Router and strict TypeScript. Use React hooks and native UI primitives. Do not transplant Svelte runes, browser-only components or server code into the app.

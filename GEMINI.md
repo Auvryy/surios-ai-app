@@ -67,7 +67,7 @@ The backend owns the assessment policy. Mobile displays returned observations an
 ## Git and workspace workflow
 
 1. Inspect the working tree and current branch before editing. Never modify or commit directly on `main`.
-2. Use a new descriptive task branch: `feat/<feature>`, `fix/<issue>`, `docs/<topic>` or `chore/<task>`.
+2. For a genuinely new feature starting from `main`, fetch and verify `origin/main` is current before creating an agreed descriptive branch: `feat/<feature>`, `fix/<issue>`, `docs/<topic>` or `chore/<task>`. Follow explicit user instructions about when to create or change branches. Stay on the current feature branch for follow-up fixes. Completing a prompt is not a reason to create, switch, rename or delete branches. Do not switch to `main` automatically when finishing work.
 3. Stay within this repository unless the user authorizes cross-repository work. A mobile task is not automatic permission to change or deploy the web backend.
 4. Preserve uncommitted work. Do not reset, delete or overwrite another contributor's changes. Treat a remote merge as unverified until fetched and inspected.
 5. Keep commits small and use plain messages such as `feat: add citizen login` or `docs: explain mobile architecture`.

@@ -145,7 +145,7 @@ Only the local mobile screens exist in this repository today. Read the [architec
 
 ## 10. Contributor workflow
 
-Read [AGENTS.md](AGENTS.md) and [GEMINI.md](GEMINI.md) before editing. Work on a descriptive task branch, preserve orange branding and keep secrets on the backend. Do not push or deploy without explicit instructions. Mobile uses React hooks/native components; the website's Svelte-specific syntax rules do not apply here.
+Read [AGENTS.md](AGENTS.md) and [GEMINI.md](GEMINI.md) before editing. Start genuinely new features on a descriptive branch from verified current main, and stay on the agreed branch for follow-up fixes. Do not switch branches at the end of a prompt. Preserve orange branding and keep secrets on the backend. Do not push or deploy without explicit instructions. Mobile uses React hooks/native components; the website's Svelte-specific syntax rules do not apply here.
 
 ## 11. Next steps
 

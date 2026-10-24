@@ -52,7 +52,7 @@ Use a physical Android device for camera, GPS, keyboard, permissions and accessi
 
 ## Git workflow
 
-Use a descriptive feature branch. Commit source and package-lock.json together; never commit `.env`, node_modules, dist, signing keys or local sessions. Run checks before submitting changes. Push only when requested.
+Start a new feature from verified current main on the agreed descriptive branch. Keep follow-up fixes on that branch and do not create or switch branches just because a prompt is complete. Follow the user's branch instructions. Commit source and package-lock.json together; never commit `.env`, node_modules, dist, signing keys or local sessions. Run checks before submitting changes. Push only when requested.
 
 ## Official references
 
