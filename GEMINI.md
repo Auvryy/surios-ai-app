@@ -31,7 +31,7 @@ Do not replace the stack or introduce Flutter, Svelte UI, a second backend, a se
 - Keep public configuration in `src/config`; separate future API transport, domain contracts and native adapters from screen rendering. Do not create empty framework layers just to match a diagram.
 - Prefer `View`, `Text`, `Pressable`, list primitives and safe-area-aware layouts. Use platform-specific files only where capabilities genuinely differ.
 - Clean up subscriptions and pending requests. Guard stale assessment results, repeated submissions and unmounted state updates.
-- Use explicit loading, empty, error and retry states. Preserve valid user input on failures. Do not silently turn a failed request into fake success.
+- Use explicit loading, empty, error and retry states. Preserve valid user input on failures. Do not silently turn a failed request into fake success. The current login/register interface is deliberately unconnected: keep the notice clear and never claim credentials were accepted.
 - Use virtualized lists for growing feeds. Avoid base64 media in application state or database records when file uploads/URIs are available.
 - Orange is the primary brand color. Do not change it to blue. Keep the interface minimal, with readable text, restrained borders and no decorative gradients.
 - Respect system theme, safe areas, large text and reduced-motion settings. Give controls accessible names, visible focus in the browser, pressed feedback and at least 48-unit touch targets.
@@ -68,11 +68,11 @@ The backend owns the assessment policy. Mobile displays returned observations an
 
 1. Inspect the working tree and current branch before editing. Never modify or commit directly on `main`.
 2. For a genuinely new feature starting from `main`, fetch and verify `origin/main` is current before creating an agreed descriptive branch: `feat/<feature>`, `fix/<issue>`, `docs/<topic>` or `chore/<task>`. Follow explicit user instructions about when to create or change branches. Stay on the current feature branch for follow-up fixes. Completing a prompt is not a reason to create, switch, rename or delete branches. Do not switch to `main` automatically when finishing work.
-3. Stay within this repository unless the user authorizes cross-repository work. A mobile task is not automatic permission to change or deploy the web backend.
+3. **Strict project-folder boundary:** stay inside `/home/andy/Projects/surios-ai-app`. Do not inspect, search, read, create or modify files outside this repository unless the user explicitly instructs you to do so. Mobile work does not itself authorize accessing or changing the sibling SvelteKit repository or any other project. Backend work requires explicit instruction to enter that repo.
 4. Preserve uncommitted work. Do not reset, delete or overwrite another contributor's changes. Treat a remote merge as unverified until fetched and inspected.
-5. Keep commits small and use plain messages such as `feat: add citizen login` or `docs: explain mobile architecture`.
+5. **Break work into commits:** make each commit small, complete and independently reviewable. Keep unrelated app code, documentation and dependency changes in separate commits when each can stand alone; avoid catch-all commits. Use plain `feat:`, `fix:`, `docs:` or `chore:` messages.
 6. Check ignored patterns and staged paths before committing. Commit `package-lock.json` when dependency changes require it.
-7. Do not push, merge or deploy automatically. Follow explicit user authorization when supplied. Otherwise provide `git push -u origin <branch-name>` for manual review and push.
+7. Never push, merge or deploy automatically. The user handles pushes and pull requests. Do not issue a push command unless the user explicitly asks. At prompt completion, leave the current feature branch checked out and do not switch branches until instructed.
 
 ## Validation and completion
 
@@ -91,10 +91,12 @@ Read the web source only when authorized. The current mobile backend assessment 
 Current source layout:
 
 ```text
-src/app/                    Screens and Expo Router root layout
+src/app/                    Entry gate, first-run onboarding, login/register, Home/About, root layout
 src/components/             Shared native UI
 src/config/environment.ts   Public API-origin placeholder; no requests yet
 src/constants/theme.ts      Orange light/dark tokens
+src/constants/onboarding.ts Versioned local first-run preference key
+src/components/auth/        Brand mark, onboarding illustrations and local-only account forms
 assets/                     Template launcher assets
 README.md                   Overview and quickstart
 AGENTS.md / GEMINI.md        Contributor and AI-agent instructions
