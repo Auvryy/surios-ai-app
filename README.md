@@ -34,7 +34,8 @@ Road pavement; bridges and footbridges; drainage and flood canals; streetlights 
 | [Development guide](docs/DEVELOPMENT.md) | Arch Linux setup, browser and phone testing, environment variables and checks |
 | [Architecture](docs/ARCHITECTURE.md) | Mobile/web/backend responsibilities, data flow and security boundaries |
 | [Roadmap](docs/ROADMAP.md) | Ordered implementation phases and acceptance criteria |
-| [Contributor instructions](AGENTS.md) | Branching, brand, secrets and validation rules |
+| [Agent quick reference](AGENTS.md) | Seven operating rules, workspace isolation and manual push workflow |
+| [Engineering constitution](GEMINI.md) | Full mobile stack, code, security, UI, assessment and Git instructions |
 
 ## 3. Quickstart — lightweight browser development
 
@@ -127,7 +128,26 @@ docs/                  Development, architecture and roadmap
 
 The intended mobile workflow makes it easier to document defects in the field, locate affected assets and follow repair evidence. This supports resilient infrastructure under SDG 9. Telecom/fiber reporting also relates to target 9.c. The platform does not claim that reporting alone proves improved infrastructure outcomes; deployment should measure response times, verified repairs and report quality.
 
-## 9. Next steps
+## 9. Architecture at a glance
+
+The mobile app is a separate client of the existing Azure system. It shares backend records and rules with the website; it does not run SvelteKit, PostgreSQL or Gemini inside the phone.
+
+```mermaid
+flowchart LR
+    Mobile[React Native mobile app] -->|Planned HTTPS API| Azure[SvelteKit backend on Azure]
+    Web[SuriOS website] --> Azure
+    Azure --> DB[(PostgreSQL)]
+    Azure --> Media[Server-managed media]
+    Azure --> AI[Gemini assessment]
+```
+
+Only the local mobile screens exist in this repository today. Read the [architecture guide](docs/ARCHITECTURE.md) for component responsibilities, request sequences, data ownership, security and deployment boundaries.
+
+## 10. Contributor workflow
+
+Read [AGENTS.md](AGENTS.md) and [GEMINI.md](GEMINI.md) before editing. Work on a descriptive task branch, preserve orange branding and keep secrets on the backend. Do not push or deploy without explicit instructions. Mobile uses React hooks/native components; the website's Svelte-specific syntax rules do not apply here.
+
+## 11. Next steps
 
 Start with authenticated citizen access and a real feed from the existing backend. Add photo capture, location selection and server-side assessment next, then shared-hazard resolution links and interactions. Keep government administration on the website initially. See the [roadmap](docs/ROADMAP.md) for dependencies and completion criteria.
 

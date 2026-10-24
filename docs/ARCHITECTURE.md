@@ -59,3 +59,122 @@ All EXPO_PUBLIC variables are public build configuration. Gemini keys, DB creden
 Camera/GPS require runtime consent and useful denial handling. Offline drafts, background sync and push notifications are future work, not existing guarantees. The default design requires network access for live reports and assessment.
 
 Browser export verifies a web target. Android bundle export verifies JavaScript bundling. Neither proves native permissions, signing, installation or store acceptance. Those require a device build and explicit testing.
+
+## Application component architecture
+
+The mobile app follows a layered client design. The first three boxes below are implemented; the API, session and native-adapter layers are integration work.
+
+```mermaid
+flowchart TD
+    Routes[Expo Router screens: Home and About] --> UI[Shared Screen and native primitives]
+    Routes --> Theme[Semantic orange light/dark tokens]
+    Routes -. Future feature screens .-> Features[Feed, reporting, profile and resolution views]
+    Features -.-> API[Typed API transport and response validation]
+    Features -.-> Device[Camera, location and map adapters]
+    API -.-> Session[Session lifecycle and secure credential storage]
+    API -. HTTPS .-> Backend[Existing Azure backend]
+```
+
+| Component | Current location/status | Responsibility and limit |
+| --- | --- | --- |
+| Root navigator | `src/app/_layout.tsx` | Stack routing, native header, status bar and theme-aware page background |
+| Home route | `src/app/index.tsx` | Explains the workflow and explicitly identifies the starter state |
+| About route | `src/app/about.tsx` | Multi-asset scope and SDG 9 context |
+| Missing route | `src/app/+not-found.tsx` | Recovery link for unmatched navigation |
+| Shared page shell | `src/components/screen.tsx` | Scroll container, safe-area edges and bounded readable width |
+| Appearance | `src/constants/theme.ts` | System light/dark selection and semantic orange colors |
+| Public configuration | `src/config/environment.ts` | Reads an optional public backend origin; performs no network requests |
+| API/session/data layer | Not implemented | Future requests, response validation, loading/error state and authenticated access |
+| Device adapters | Not implemented | Future camera, location permissions and platform-specific integrations |
+
+Use component-local state for local interactions. A future server-state cache should be introduced only when fetching/mutation requirements justify it; no cache, global state library or persistence adapter is configured now.
+
+## Existing backend integration points
+
+The following paths were checked in the web repository during this documentation update. They are existing server routes, **not implemented mobile calls or a frozen mobile API contract**. Read their source again before integration, including accepted payloads, role checks, response shapes and origin enforcement.
+
+| Server route | Existing role in the platform | Mobile integration consideration |
+| --- | --- | --- |
+| `GET /api/community/posts` | Loads the community feed | Pagination/filter contracts and public versus authenticated fields |
+| `POST /api/community/assess` | Accepts media and reporter context, performs assessment and saves a draft | Multipart uploads, request identity, cancellation, quota/errors and draft ownership |
+| `POST /api/community/posts` | Publishes from a validated assessment draft | JSON validation, context freshness, cover selection and verified road geometry |
+| `/api/community/drafts/[id]` | Draft lifecycle endpoint | Inspect supported methods and cleanup behavior before wiring cancel/discard |
+| `/api/map/hazards` | Map hazard data | Inspect filters, permissions, payload size and refresh strategy |
+| `/api/roads` | Road-reference data | Verify geometry shape, limits and road selection semantics |
+| `/api/community/posts/[id]` | Individual-post operations | Inspect supported methods; do not infer operations from the URL alone |
+| `/api/community/reposts` and `/api/community/reposts/[id]` | Reposts and official updates | Preserve update-specific interactions, permissions and resolution linking |
+| `/api/profile` | Profile operations | Inspect ownership, upload limits and supported mutations |
+
+Existing web authentication uses a `surios_session` cookie. There is no mobile login implementation here. A native authentication design must be established before assuming any authenticated route is callable. Listing a path above does not promise native compatibility.
+
+## Planned assessment and publication sequence
+
+```mermaid
+sequenceDiagram
+    actor Citizen
+    participant App as Mobile app (future workflow)
+    participant Server as Azure SvelteKit API
+    participant AI as Gemini
+    participant DB as PostgreSQL and media storage
+    Citizen->>App: Add media, headline/caption and location
+    App->>Server: Authenticated assessment request
+    Server->>Server: Validate identity, quota and media
+    Server->>AI: Media and reporter context under server policy
+    AI-->>Server: Structured assessment
+    Server->>Server: Validate and normalize assessment
+    alt Supported infrastructure and valid evidence
+        Server->>DB: Save owned assessment draft and media
+        Server-->>App: Draft ID, media and assessment
+        Citizen->>App: Review and publish
+        App->>Server: Draft ID, cover, text and selected location
+        Server->>Server: Check ownership, context freshness and geometry
+        Server->>DB: Save post and evidence-linked hazard
+        Server-->>App: Saved post result
+    else Rejected evidence or unavailable assessment
+        Server-->>App: Validation or service error
+        App-->>Citizen: Explain failure and preserve retryable input
+    end
+```
+
+The mobile client should cancel/discard through the agreed draft lifecycle rather than merely hide a loading indicator. It must ignore stale responses and cannot reuse an assessment after relevant evidence/context changes unless the backend validates it. Publication success is confirmed only by the backend response; navigation alone is not proof of persistence.
+
+## Shared data model and ownership
+
+These are conceptual platform entities, not a new database schema or migration proposal.
+
+| Entity | Source of truth | Mobile responsibility |
+| --- | --- | --- |
+| User and session | Existing backend/database | Present allowed identity fields and maintain an agreed session lifecycle |
+| Assessment draft | Backend-owned, time-limited draft | Hold a draft reference, show observations and honor validity/cancellation |
+| Citizen post and media | Backend records plus media storage | Render actual content and upload through validated endpoints |
+| Hazard and linked reports | Backend grouping logic | Display returned grouping/status; never merge nearby reports locally |
+| Official update and evidence | Government-authored backend record | Display status, evidence and the linked resolution explanation |
+| Reaction, comment and repost | Backend interaction records | Update UI from saved results and recover from rejected mutations |
+
+Several posts can point to the same hazard. Resolving that hazard changes linked post status, while the explanation lives in the official update. Display counts and references from the backend; do not count every progress update as another distinct repaired hazard.
+
+## Deployment and environments
+
+| Runtime | Runs where | Configuration and outputs |
+| --- | --- | --- |
+| Development bundler | Developer PC, usually port 8081 | Expo serves the mobile JavaScript and browser preview |
+| Browser preview | Developer browser | React Native Web; API-origin/CORS work is still pending |
+| Android/iOS app | Physical phone or emulator | Future native build; same configured backend origin, own mobile session |
+| Web/backend | Existing Azure deployment | SvelteKit service, server secrets and current API/business rules |
+| Database/media | Existing server infrastructure | Shared records and uploads; no database credential in the app |
+| Native build pipeline | Not configured | Future EAS or local SDK/JDK build; signing and identifiers still pending |
+
+This repository does not provision or redeploy Azure. Installing or updating a mobile app does not apply backend migrations. Any necessary backend changes must be implemented, reviewed and deployed separately, with API compatibility maintained for installed app versions. Changing a bundled API origin requires an appropriate app rebuild/update; it is not a server-side secret switch.
+
+## Architecture decisions and open work
+
+- **Separate mobile client, shared backend:** preserves one authoritative issue lifecycle while allowing a device-focused interface.
+- **React Native + Expo:** follows the selected stack and supports a browser/physical-phone workflow without requiring an emulator for daily layout work.
+- **Server-side assessment:** protects keys and keeps evidence/severity policy consistent across clients.
+- **No speculative second database or backend:** avoids split user accounts, reports and resolution state.
+- **Authentication remains undecided:** choose and validate native session transport, secure storage, expiry/revocation and browser-preview behavior in the first integration phase.
+- **Map implementation remains undecided:** select a native-compatible street-map approach after device and licensing requirements are verified; Leaflet is browser-based and cannot simply be dropped into native views.
+- **Release tooling remains unconfigured:** package/bundle identifiers, final artwork, build profiles, signing and device validation are later work.
+- **Offline and notifications remain future scope:** no background delivery, synchronization or real-time update guarantee is present.
+
+Use [ROADMAP.md](ROADMAP.md) for implementation order and [DEVELOPMENT.md](DEVELOPMENT.md) for commands and current audit findings.
