@@ -12,13 +12,13 @@ npm ci
 npm run web
 ```
 
-Expo prints the development URL, normally localhost:8081. To choose a port explicitly:
+Expo prints the development URL, normally localhost:8081. Open `/citizen` to inspect the mobile feed preview directly; the sign-in and registration pages also link to it. To choose a port explicitly:
 
 ```bash
 npm run web -- --port 8082
 ```
 
-The web backend can continue running at localhost:5173; these are separate processes and repositories. Browser responsive mode is useful for layout, navigation, zoom and light/dark checks. It does not emulate Android hardware or permissions.
+The web backend can continue running at localhost:5173; these are separate processes and repositories. Browser responsive mode is useful for layout, navigation and zoom. To verify light-only behavior, set the operating system to dark appearance and confirm that SuriOS remains light. This does not emulate Android hardware or permissions.
 
 ## Physical Android device
 
@@ -48,7 +48,7 @@ No API requests are currently made, and an absent API URL does not prevent the s
 - `npm run export:android`: Android JavaScript bundle, not an APK.
 - `npx expo-doctor`: Expo dependency/configuration diagnostics.
 
-Use a physical Android device for camera, GPS, keyboard, permissions and accessibility checks before shipping those features. Browser checks should include narrow phone and tablet/desktop widths, both themes, enlarged text and keyboard navigation.
+Use a physical Android device for camera, GPS, keyboard, permissions and accessibility checks before shipping those features. Browser checks should include narrow phone and tablet/desktop widths, light-only behavior under both system appearance settings, enlarged text and keyboard navigation. The current report composer is preview-only; camera, location selection and publishing are not connected.
 
 ## Git workflow
 

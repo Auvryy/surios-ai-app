@@ -2,7 +2,7 @@
 
 ## Phase 0 — initialized foundation
 
-Home/About screens, Expo Router, TypeScript, orange theme, first-run three-slide onboarding, local onboarding completion preference, validated registration/sign-in UI, browser preview, public configuration template and documentation. Account forms do not contact the server. This phase contains no connected user workflow.
+Home/About screens, Expo Router, TypeScript, orange light-only theme, first-run three-slide onboarding, local onboarding completion preference, validated registration/sign-in UI, citizen feed shell with bottom tabs and report-composer preview, browser preview, public configuration template and documentation. Account forms and the feed do not contact the server. This phase contains no connected user workflow.
 
 ## Phase 1 — authenticated access and feed
 

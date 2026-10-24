@@ -17,7 +17,7 @@ The mobile repo currently contains a branded foundation, not connected reporting
 | Mobile UI | React Native + TypeScript | Functional components, strict types, native primitives and React hooks |
 | App framework | Expo | Use SDK-compatible packages; avoid unnecessary native dependencies |
 | Navigation | Expo Router | Routes in `src/app`; typed links, predictable back navigation and deliberate deep links |
-| Styling | React Native StyleSheet + semantic tokens | Orange branding, shared tokens in `src/constants/theme.ts`, light/dark parity |
+| Styling | React Native StyleSheet + semantic tokens | Orange branding, fixed light-only appearance and shared tokens in `src/constants/theme.ts` |
 | Browser preview | React Native Web | Useful for layout and navigation; not proof of native behavior |
 | Backend, separate repo | SvelteKit on Azure | Authentication, authorization, validation and business rules remain server-side |
 | Persistence, server-side | PostgreSQL + Drizzle | No direct database access from the mobile client |
@@ -34,7 +34,7 @@ Do not replace the stack or introduce Flutter, Svelte UI, a second backend, a se
 - Use explicit loading, empty, error and retry states. Preserve valid user input on failures. Do not silently turn a failed request into fake success. The current login/register interface is deliberately unconnected: keep the notice clear and never claim credentials were accepted.
 - Use virtualized lists for growing feeds. Avoid base64 media in application state or database records when file uploads/URIs are available.
 - Orange is the primary brand color. Do not change it to blue. Keep the interface minimal, with readable text, restrained borders and no decorative gradients.
-- Respect system theme, safe areas, large text and reduced-motion settings. Give controls accessible names, visible focus in the browser, pressed feedback and at least 48-unit touch targets.
+- Always render the app in the light appearance regardless of the operating system setting. Do not add dark mode or an appearance toggle. Respect safe areas, large text and reduced-motion settings. Give controls accessible names, visible focus in the browser, pressed feedback and at least 48-unit touch targets.
 - Keep maps and media usable on narrow phones. Critical actions must have tap controls rather than depend exclusively on dragging or hover.
 - Use genuine media or explicitly labeled fixtures. Never describe demo records as verified reports.
 
@@ -91,10 +91,10 @@ Read the web source only when authorized. The current mobile backend assessment 
 Current source layout:
 
 ```text
-src/app/                    Entry gate, first-run onboarding, login/register, Home/About, root layout
-src/components/             Shared native UI
+src/app/                    Entry gate, onboarding, login/register, citizen feed and Home alias, About, root layout
+src/components/             Shared native UI, citizen bottom navigation and report-composer preview
 src/config/environment.ts   Public API-origin placeholder; no requests yet
-src/constants/theme.ts      Orange light/dark tokens
+src/constants/theme.ts      Fixed orange light-appearance tokens
 src/constants/onboarding.ts Versioned local first-run preference key
 src/components/auth/        Brand mark, onboarding illustrations and local-only account forms
 assets/                     Template launcher assets
