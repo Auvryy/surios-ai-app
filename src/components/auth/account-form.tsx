@@ -60,6 +60,9 @@ export function AccountForm({ mode }: { mode: AccountMode }) {
                   <Pressable accessibilityRole="link" hitSlop={8}><Text style={[styles.switchLink, { color: colors.primary }]}>{isRegister ? 'Sign in' : 'Create an account'}</Text></Pressable>
                 </Link>
               </View>
+              <Link href="/citizen" asChild>
+                <Pressable accessibilityRole="link" hitSlop={8} style={styles.previewLink}><Text style={[styles.previewLinkText, { color: colors.primary }]}>Explore the citizen feed preview</Text></Pressable>
+              </Link>
             </View>
             <Text style={[styles.privacy, { color: colors.muted }]}>Your reports help communities track public infrastructure concerns. Sign-up is not yet connected to the service.</Text>
           </View>
@@ -86,6 +89,8 @@ const styles = StyleSheet.create({
   notice: { borderWidth: 1, borderRadius: 8, padding: 12 }, noticeText: { fontSize: 14, lineHeight: 20 },
   submit: { minHeight: 50, borderRadius: 8, alignItems: 'center', justifyContent: 'center', padding: 12 }, submitText: { fontSize: 15, fontWeight: '600' },
   switchRow: { minHeight: 38, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, flexWrap: 'wrap' },
+  previewLink: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  previewLinkText: { fontSize: 14, fontWeight: '600', textDecorationLine: 'underline' },
   switchCopy: { fontSize: 14 }, switchLink: { fontSize: 14, fontWeight: '600', textDecorationLine: 'underline' },
   privacy: { fontSize: 12, lineHeight: 18, textAlign: 'center' },
 });
