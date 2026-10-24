@@ -16,15 +16,16 @@ This repository contains the **mobile client**, built with **React Native, Expo,
 This is an initialized mobile foundation, **not yet a connected reporting app**.
 
 - Three first-run introduction slides, persistent completion, and registration/sign-in interface with SuriOS orange branding.
-- Home (`/home`) and About (`/about`) screens are retained.
-- System light/dark appearance, safe-area layout and responsive browser preview.
+- Citizen feed (`/home` and `/citizen`) and About (`/about`) screens are available.
+- Orange light-only appearance regardless of the device theme, safe-area layout and responsive browser preview.
+- Citizen feed shell with bottom navigation, an elevated center camera/post button, map and updates previews, and a clearly labeled report-composer preview.
 - File-based navigation and a missing-page screen.
 - Strict TypeScript, linting, reproducible npm lockfile and web/Android bundle commands.
 - Optional public API-origin configuration, ready for the integration phase.
 
 **UI present, backend not connected:** sign-in and registration forms validate basic fields but do not submit credentials or create accounts. Intro completion is stored locally on the device. On a fresh install, users see three introduction slides with Next controls; the last step opens registration. Skip opens registration directly, and returning users see sign-in first. Login and registration links let users switch between the forms.
 
-**Not implemented yet:** server authentication/account creation, account persistence, live feed, uploads, camera/GPS, hazard map, report assessment, reactions, comments and government-resolution links. No demo posts or fabricated AI assessments are presented as live data. Launcher icons are Expo template placeholders pending final SuriOS artwork.
+**Not implemented yet:** server authentication/account creation, account persistence, live feed, uploads, camera/GPS, live hazard map, report assessment, reactions, comments and government-resolution links. The citizen screen is an interface preview: it shows no fabricated live posts, and the report composer does not publish or persist a report. No AI assessments are presented. Launcher icons are Expo template placeholders pending final SuriOS artwork.
 
 ### Planned reporting scope
 
@@ -50,6 +51,8 @@ npm run web
 ```
 
 Open the URL printed by Expo, normally **http://localhost:8081**. Use browser responsive mode for a phone-sized viewport. This previews React Native Web; native camera, GPS and permission behavior still needs a phone or emulator.
+
+Open **http://localhost:8081/citizen** to inspect the citizen feed and bottom navigation directly, or use “Explore the citizen feed preview” from the sign-in or registration screen. The main feed and composer are preview-only until mobile API integration is complete.
 
 For the first clone:
 
@@ -119,8 +122,8 @@ Android export verifies the JavaScript bundle; it does **not** produce an APK or
 
 ```text
 src/
-  app/                 Entry gate, onboarding, auth, Home/About routes
-  components/          Shared React Native UI and auth components
+  app/                 Entry gate, onboarding, auth, citizen feed/Home, About routes
+  components/          Shared React Native UI, citizen navigation and report-composer preview
   config/              Public environment configuration
   constants/           Orange theme and onboarding preference key
 assets/                Template launcher assets; branding replacement pending
