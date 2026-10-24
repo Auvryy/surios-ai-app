@@ -5,12 +5,12 @@ Read [GEMINI.md](GEMINI.md) completely before modifying this repository. It cont
 ## Seven operating rules
 
 1. **Use the agreed feature branch.** Never code or commit on `main`. When starting a new feature from `main`, fetch and verify the latest `origin/main` before creating a descriptive branch. Stay on that branch for follow-up fixes. Do not create or switch branches merely because a prompt is complete; follow the user's branch instructions. Check the working tree before switching and preserve others' changes.
-2. **Keep work isolated.** Work inside `/home/andy/Projects/surios-ai-app`. Read or modify sibling projects only when the user authorizes it. Backend changes belong in the separate web repository and must be tracked explicitly.
+2. **Strict project-folder boundary.** Work only inside `/home/andy/Projects/surios-ai-app`. Do not inspect, search, read, create or modify files outside this project folder unless the user explicitly instructs you to do so. A task to build mobile screens does not itself authorize changes to the web repo. Backend work requires explicit instruction to enter that repository.
 3. **Protect secrets.** Never stage credentials, real `.env` files, signing keys, tokens or private certificates. Verify `.gitignore`. `.env.example` may contain public placeholders only. Every `EXPO_PUBLIC_` value is public.
 4. **Preserve the mobile stack.** Use React Native, Expo, Expo Router and strict TypeScript. Use React hooks and native UI primitives. Do not transplant Svelte runes, browser-only components or server code into the app.
 5. **Preserve SuriOS behavior.** Orange is the brand color. Respect light/dark themes, safe areas, accessible touch targets, the multi-asset SDG 9 scope and backend-controlled assessment/grouping/resolution rules. Never fabricate live posts or AI results.
-6. **Verify and commit clearly.** Keep commits focused. Follow [GEMINI.md](GEMINI.md#validation-and-completion) for checks appropriate to the change. Browser export, Android bundle export and native-device testing prove different things; report the limits honestly.
-7. **Do not push automatically.** The user reviews and pushes unless they explicitly ask you to push. End a completed Git task with the actual branch's command: `git push -u origin <branch-name>`.
+6. **Break work into commits.** Commit small, complete, independently reviewable changes. Keep unrelated app code, documentation, and dependency updates in separate commits when they can stand alone; do not create one large catch-all commit. Use a clear `feat:`, `fix:`, `docs:` or `chore:` message. Follow [GEMINI.md](GEMINI.md#validation-and-completion) for checks appropriate to each change. Browser export, Android bundle export and native-device testing prove different things; report the limits honestly.
+7. **Never push automatically.** The user handles pushes and pull requests. Do not issue a push command unless the user explicitly asks. At prompt completion, leave the current feature branch checked out; do not switch branches until instructed.
 
 ## Read next
 

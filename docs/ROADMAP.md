@@ -2,11 +2,11 @@
 
 ## Phase 0 — initialized foundation
 
-Home/About screens, Expo Router, TypeScript, orange theme, browser preview, public configuration template and documentation. This phase contains no connected user workflow.
+Home/About screens, Expo Router, TypeScript, orange theme, first-run three-slide onboarding, local onboarding completion preference, validated registration/sign-in UI, browser preview, public configuration template and documentation. Account forms do not contact the server. This phase contains no connected user workflow.
 
 ## Phase 1 — authenticated access and feed
 
-Audit web APIs, agree on mobile session/secure-storage contracts and browser-origin rules, then implement sign-in, logout, session expiry and paginated saved posts. Acceptance: a real Azure account sees the same authorized posts in web and mobile; failures are visible and no secrets enter the bundle.
+Audit web APIs, agree on mobile session/secure-storage contracts and browser-origin rules, then connect the existing sign-in/register UI to real account creation and implement logout, session expiry and paginated saved posts. Acceptance: a real Azure account sees the same authorized posts in web and mobile; failures are visible and no secrets enter the bundle.
 
 ## Phase 2 — citizen field reporting
 

@@ -15,13 +15,16 @@ This repository contains the **mobile client**, built with **React Native, Expo,
 
 This is an initialized mobile foundation, **not yet a connected reporting app**.
 
-- Working home and About screens with SuriOS orange branding.
+- Three first-run introduction slides, persistent completion, and registration/sign-in interface with SuriOS orange branding.
+- Home (`/home`) and About (`/about`) screens are retained.
 - System light/dark appearance, safe-area layout and responsive browser preview.
 - File-based navigation and a missing-page screen.
 - Strict TypeScript, linting, reproducible npm lockfile and web/Android bundle commands.
 - Optional public API-origin configuration, ready for the integration phase.
 
-**Not implemented yet:** sign-in, account persistence, live feed, uploads, camera/GPS, hazard map, report assessment, reactions, comments and government-resolution links. No demo posts or fabricated AI assessments are presented as live data. Launcher icons are Expo template placeholders pending final SuriOS artwork.
+**UI present, backend not connected:** sign-in and registration forms validate basic fields but do not submit credentials or create accounts. Intro completion is stored locally on the device. On a fresh install, users see three introduction slides with Next controls; the last step opens registration. Skip opens registration directly, and returning users see sign-in first. Login and registration links let users switch between the forms.
+
+**Not implemented yet:** server authentication/account creation, account persistence, live feed, uploads, camera/GPS, hazard map, report assessment, reactions, comments and government-resolution links. No demo posts or fabricated AI assessments are presented as live data. Launcher icons are Expo template placeholders pending final SuriOS artwork.
 
 ### Planned reporting scope
 
@@ -34,7 +37,7 @@ Road pavement; bridges and footbridges; drainage and flood canals; streetlights 
 | [Development guide](docs/DEVELOPMENT.md) | Arch Linux setup, browser and phone testing, environment variables and checks |
 | [Architecture](docs/ARCHITECTURE.md) | Mobile/web/backend responsibilities, data flow and security boundaries |
 | [Roadmap](docs/ROADMAP.md) | Ordered implementation phases and acceptance criteria |
-| [Agent quick reference](AGENTS.md) | Seven operating rules, workspace isolation and manual push workflow |
+| [Agent quick reference](AGENTS.md) | Seven operating rules, workspace isolation and user-managed branch workflow |
 | [Engineering constitution](GEMINI.md) | Full mobile stack, code, security, UI, assessment and Git instructions |
 
 ## 3. Quickstart — lightweight browser development
@@ -116,10 +119,10 @@ Android export verifies the JavaScript bundle; it does **not** produce an APK or
 
 ```text
 src/
-  app/                 Expo Router screens and root layout
-  components/          Shared React Native UI
+  app/                 Entry gate, onboarding, auth, Home/About routes
+  components/          Shared React Native UI and auth components
   config/              Public environment configuration
-  constants/           Orange light/dark theme tokens
+  constants/           Orange theme and onboarding preference key
 assets/                Template launcher assets; branding replacement pending
 docs/                  Development, architecture and roadmap
 ```

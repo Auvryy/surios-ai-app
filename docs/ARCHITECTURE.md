@@ -2,7 +2,13 @@
 
 ## Current implementation
 
-The repository is an Expo-managed React Native client with a static browser preview. Home and About screens run locally; there are no backend requests, stored credentials, database connections or AI calls. Expo Router owns navigation. Shared semantic color tokens support system light/dark mode.
+The repository is an Expo-managed React Native client with a static browser preview. Home, About, onboarding, registration and sign-in UI run locally; onboarding completion is saved in device storage. Credential forms perform basic client-side validation, show a clear not-connected notice and make no backend requests. No credentials are stored, and there are no database connections or AI calls. Expo Router owns navigation. Shared semantic color tokens support system light/dark mode.
+
+## Current screens and first-run behavior
+
+On a fresh install, the entry route reads a versioned AsyncStorage key and sends the user to onboarding. The introduction has three cards with Next controls, a progress indicator, Skip, and a sign-in route. Completing/skipping stores the preference and opens registration. Returning installs go to the sign-in interface. Users can still switch between sign-in and registration.
+
+The login and registration screens currently validate inputs on-device and then display a message that authentication is unavailable. They do not send, persist or log entered credentials. The forms are interface groundwork only; no account is created.
 
 ## Intended integrated architecture
 
@@ -66,8 +72,10 @@ The mobile app follows a layered client design. The first three boxes below are 
 
 ```mermaid
 flowchart TD
-    Routes[Expo Router screens: Home and About] --> UI[Shared Screen and native primitives]
+    Routes[Expo Router screens: onboarding, login, register, Home and About] --> UI[Shared Screen and native primitives]
     Routes --> Theme[Semantic orange light/dark tokens]
+    Entry[Entry gate] --> Preferences[Local onboarding completion preference]
+    Entry --> Routes
     Routes -. Future feature screens .-> Features[Feed, reporting, profile and resolution views]
     Features -.-> API[Typed API transport and response validation]
     Features -.-> Device[Camera, location and map adapters]
@@ -78,10 +86,15 @@ flowchart TD
 | Component | Current location/status | Responsibility and limit |
 | --- | --- | --- |
 | Root navigator | `src/app/_layout.tsx` | Stack routing, native header, status bar and theme-aware page background |
-| Home route | `src/app/index.tsx` | Explains the workflow and explicitly identifies the starter state |
+| Entry route | `src/app/index.tsx` | Reads local onboarding completion and redirects first-time/returning users. |
+| Home route | `src/app/home.tsx` | Retained product introduction and local starter overview. |
+| Onboarding route | `src/app/onboarding.tsx` | Three slides, Next/Skip/create-account, returning-user sign-in link; stores completion locally. |
+| Account form | `src/components/auth/account-form.tsx` | Login/register fields, visibility controls and local validation; announces that server auth is not connected. |
 | About route | `src/app/about.tsx` | Multi-asset scope and SDG 9 context |
 | Missing route | `src/app/+not-found.tsx` | Recovery link for unmatched navigation |
 | Shared page shell | `src/components/screen.tsx` | Scroll container, safe-area edges and bounded readable width |
+| Brand/auth primitives | `src/components/auth/brand-mark.tsx`, `onboarding-art.tsx` | Orange wordmark and native onboarding illustrations. |
+| Onboarding preference key | `src/constants/onboarding.ts` | Versioned local AsyncStorage key; no account/session credential storage. |
 | Appearance | `src/constants/theme.ts` | System light/dark selection and semantic orange colors |
 | Public configuration | `src/config/environment.ts` | Reads an optional public backend origin; performs no network requests |
 | API/session/data layer | Not implemented | Future requests, response validation, loading/error state and authenticated access |
