@@ -3,10 +3,10 @@ import { StatusBar } from 'expo-status-bar';
 import { useTheme } from '@/constants/theme';
 
 export default function RootLayout() {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   return (
     <>
-      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <StatusBar style="dark" />
       <Stack screenOptions={{
         headerStyle: { backgroundColor: colors.surface },
         headerTintColor: colors.primary,
