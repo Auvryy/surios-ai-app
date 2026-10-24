@@ -28,7 +28,8 @@
         {
           "backgroundColor": "#FAFAFA"
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true,
