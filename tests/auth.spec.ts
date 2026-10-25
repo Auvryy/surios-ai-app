@@ -195,7 +195,7 @@ test('official photo attachments appear in the feed with an overflow count', asy
   await page.route(`${origin}/media/*.png`, route => route.fulfill({ contentType: 'image/png', path: 'assets/images/icon.png' }));
   await mock(page, async (route, path) => {
     if (path !== '/api/community/posts') return false;
-    const repost = { id: 'official', body: 'Demo maintenance completed.', createdAt: '2026-10-25T00:00:00Z', author: { name: 'Demo municipal office' }, media: [], governmentUpdate: { status: 'RESOLVED', attachments: [{ kind: 'photo', url: '/media/one.png' }, { kind: 'photo', url: '/media/two.png' }] }, post: post() };
+    const repost = { id: 'official', body: 'Demo maintenance completed.', createdAt: '2026-10-25T00:00:00Z', author: { name: 'Demo municipal office' }, media: [], governmentUpdate: { status: 'RESOLVED', attachments: [{ id: 'photo-one', kind: 'photo', url: '/media/one.png', name: 'one.png', mimeType: 'image/png' }, { id: 'photo-two', kind: 'photo', url: '/media/two.png', name: 'two.png', mimeType: 'image/png' }] }, post: post() };
     await json(route, { feed: [{ kind: 'repost', repost }], currentPage: 1, hasMore: false });
     return true;
   });

@@ -29,6 +29,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
+    "@types/node": "^26.6.5",
     "@types/react": "~19.3.0",
     "eslint": "^9.39.5",
     "eslint-config-expo": "~58.0.4",
@@ -40,12 +41,15 @@
     "web": "expo start --web",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tests/tsconfig.json",
     "lint": "expo lint",
     "check": "npm run typecheck && npm run lint",
     "export:web": "expo export --platform web",
     "export:android": "expo export --platform android",
-    "test:auth": "playwright test"
+    "test:auth": "playwright test session.spec.ts auth.spec.ts auth-live.spec.ts",
+    "map:bundle": "node scripts/bundle-map.mjs",
+    "test": "playwright test",
+    "test:reporting": "playwright test report-controller.spec.ts reporting.spec.ts reporting-live.spec.ts"
   },
   "private": true,
   "engines": {
