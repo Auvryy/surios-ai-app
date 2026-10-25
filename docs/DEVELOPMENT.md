@@ -45,9 +45,9 @@ scrcpy --no-control
 
 `--no-control` mirrors the phone without injecting input, useful on devices that require an additional security setting for remote control. This USB mapping connects to Expo on the PC; API requests still use the configured Azure HTTPS origin. Reload after code updates, but finish or explicitly discard an open report first because composer contents are held in memory.
 
-Expo Go is the development host and keeps its own launcher icon. The configured SuriOS icon, Orie assets and splash screen appear in a separately built SuriOS app. Installing Expo Go or exporting Android JavaScript does not create that APK. Native package identifiers, build profiles and signing need to be configured for a branded build.
+Expo Go is the development host and keeps its own launcher icon. The configured SuriOS icon, Orie assets and splash screen appear in a separately built SuriOS app. Installing Expo Go or exporting Android JavaScript does not create that APK. The Android package, linked Expo project and `preview` APK profile are configured; signing and the actual build still need to finish. See [Android APK setup](ANDROID_BUILD.md).
 
-A dedicated Expo development build will be needed when adding native dependencies unavailable in Expo Go. EAS cloud builds can avoid local Android build tooling; account setup, build profiles and signing will be configured in that phase. Local Android builds need the Android SDK and JDK. Native iOS local builds require macOS/Xcode.
+A dedicated Expo development build will be needed when adding native dependencies unavailable in Expo Go. The prepared `preview` profile produces a standalone release APK for phone testing; it does not require `expo-dev-client`. EAS cloud builds avoid local Android compilation tools. Local Android builds need the Android SDK and JDK. Native iOS local builds require macOS/Xcode.
 
 ## Backend origin
 

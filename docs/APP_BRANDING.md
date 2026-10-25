@@ -48,7 +48,7 @@ To change the artwork, retain the reference and replace the transparent raster m
 
 Refresh the browser export to publish a changed favicon, and reload the browser if it has cached the old image. Native launcher and splash changes require a new app binary and reinstall; a JavaScript reload or over-the-air update does not update those native resources. See the official [splash-screen plugin documentation](https://docs.expo.dev/versions/latest/sdk/splash-screen/#configuration).
 
-Android/iOS identifiers, EAS build profiles, signing and store submission remain part of the distribution phase. This change does not configure or publish a release. When native build prerequisites and identifiers are ready, a local Android release can be built with `npx expo run:android --variant release`; iOS native builds require macOS/Xcode. Use an isolated checkout for native generation and keep signing material out of Git.
+The Android package `site.surios.app`, linked Expo project and EAS `preview` APK profile are now configured; signing and the actual build remain. See [ANDROID_BUILD.md](ANDROID_BUILD.md) for cloud build and installation. iOS identity/builds and store submission remain separate distribution work. A local Android release also needs the Android SDK/JDK and can be built with `npx expo run:android --variant release`; iOS native builds require macOS/Xcode. Use an isolated checkout for native generation and keep signing material out of Git.
 
 ## Verification and acceptance
 

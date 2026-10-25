@@ -141,7 +141,7 @@ npx expo-doctor
 npm test
 ```
 
-Android export verifies the JavaScript bundle; it does **not** produce an APK or prove native-device behavior. Native builds, signing, store submission and EAS project setup are not configured yet.
+Android export verifies the JavaScript bundle; it does **not** produce an APK or prove native-device behavior. The Android package, linked Expo project and EAS `preview` APK profile are configured. Signing and an actual cloud build are still required. See [install SuriOS on Android](docs/ANDROID_BUILD.md). Store submission is separate.
 
 ## 7. Repository layout
 

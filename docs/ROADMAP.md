@@ -28,6 +28,6 @@ Implemented: server-backed search, Critical/media/sort filters, Liked posts, fee
 
 Implemented: Orie launcher icon, Android adaptive/themed layers, splash artwork and browser favicon, with validated colors, dimensions and safe margins. See [APP_BRANDING.md](APP_BRANDING.md). Installed launcher/splash acceptance still requires a rebuilt native binary.
 
-Configure Android package/iOS bundle identifiers, EAS project/build profiles and signing. Test a dedicated development APK on Android before a distributable build. Validate permissions, keyboard, safe areas, large text, offline errors, upload recovery and authentication expiry. iOS validation follows when hardware/distribution access is available.
+Configured: Android package `site.surios.app`, linked Expo project and an EAS `preview` profile for a standalone APK using the Azure API. Configure signing, build and install the APK, then validate launcher/splash, permissions, keyboard, safe areas, large text, offline errors, upload recovery, map gestures and authentication expiry. See [ANDROID_BUILD.md](ANDROID_BUILD.md). iOS identifiers and validation follow when hardware/distribution access is available.
 
 Offline drafts, push notifications and app-store publishing are optional later projects. Do not claim these are included in the initialized starter.
