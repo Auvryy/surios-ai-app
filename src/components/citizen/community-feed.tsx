@@ -8,7 +8,6 @@ import {
 import {
   ActivityIndicator,
   FlatList,
-  Image,
   Linking,
   Pressable,
   StyleSheet,
@@ -30,7 +29,7 @@ import { Button } from "@/components/ui/controls";
 import { Avatar } from "@/components/ui/avatar";
 import { contributorDestination, profileImageUrl } from "@/lib/profile";
 import { postDestination, validId } from "@/lib/discussion";
-import { EvidencePreview, type PreviewMedia } from "./evidence-preview";
+import { PostGallery } from "./post-gallery";
 import { feedRequest, type FeedQuery } from "@/lib/feed-filters";
 import { FeedControls } from "./feed-controls";
 import { PostMenu } from "./post-menu";
@@ -107,8 +106,8 @@ export function CommunityFeed({
       contentContainerStyle={styles.list}
       keyboardShouldPersistTaps="handled"
       ListHeaderComponent={<View style={styles.header}>{header}
-        <FeedControls key={`${query.tab}:${query.q}`} query={query} onChange={onQueryChange} total={data?.total ?? null} loading={loading} />
         {!query.q && query.tab !== "liked" && composer}
+        <FeedControls key={`${query.tab}:${query.q}`} query={query} onChange={onQueryChange} total={data?.total ?? null} loading={loading} />
       </View>}
       renderItem={({ item }) => <PostCard item={item} onMap={onMap} onDeleted={() => load(lastPage.current)} />}
       ItemSeparatorComponent={() => <View style={styles.separator} />}
@@ -200,7 +199,6 @@ export function PostCard({
   const { colors } = useTheme();
   const router = useRouter();
   const [linkError, setLinkError] = useState("");
-  const [preview, setPreview] = useState<PreviewMedia[] | null>(null);
   const [removed, setRemoved] = useState(false);
   const open = async (path: string) => {
     try {
@@ -298,23 +296,8 @@ export function PostCard({
           {item.body}
         </Text>
       )}
-      {item.photoUrl && (
-        <View style={styles.imageWrap}>
-          <Image
-            source={{ uri: publicUrl(item.photoUrl, apiOrigin()) }}
-            accessibilityLabel={`Photo attached by ${item.author}`}
-            resizeMode="cover"
-            style={styles.image}
-          />
-          {item.photoCount > 1 && (
-            <View style={[styles.count, { backgroundColor: colors.surface }]}>
-              <Text style={[styles.meta, { color: colors.text }]}>
-                +{item.photoCount - 1} photos
-              </Text>
-            </View>
-          )}
-        </View>
-      )}
+      <PostGallery key={`${item.id}:${item.coverId}`} media={item.media} coverId={item.coverId} point={item.point} roadSegment={item.roadSegment} title={item.title}
+        onMap={item.reportId ? () => onMap(item.reportId!) : undefined} />
       {item.originalTitle && (
         <View style={[styles.quote, { borderColor: colors.border }]}>
           <Text style={[styles.meta, { color: colors.muted }]}>
@@ -324,22 +307,6 @@ export function PostCard({
             {item.originalTitle}
           </Text>
         </View>
-      )}
-      {!!item.media.length && (
-        <Button
-          label={`View ${item.media.length} attached ${item.media.length === 1 ? "file" : "files"}`}
-          icon="image"
-          onPress={() =>
-            setPreview(
-              item.media.map((m) => ({
-                id: m.id,
-                uri: publicUrl(m.url, apiOrigin()),
-                kind: m.kind,
-                name: m.name,
-              })),
-            )
-          }
-        />
       )}
       {!!item.location && (
         <Text style={[styles.meta, { color: colors.muted }]}>
@@ -381,18 +348,15 @@ export function PostCard({
           {linkError}
         </Text>
       )}
-      {preview && (
-        <EvidencePreview media={preview} onClose={() => setPreview(null)} />
-      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  list: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 28 },
-  header: { paddingBottom: 20, gap: 20 },
+  list: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 28 },
+  header: { paddingBottom: 16, gap: 12 },
   separator: { height: 16 },
-  card: { padding: 16, borderWidth: 1, borderRadius: 16, gap: 12 },
+  card: { padding: 12, borderWidth: 1, borderRadius: 16, gap: 12 },
   authorRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   authorCopy: { flex: 1, gap: 2 },
   avatar: {
@@ -414,16 +378,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     minHeight: 48,
     borderRadius: 24,
-  },
-  imageWrap: { position: "relative" },
-  image: { width: "100%", height: 220, borderRadius: 10 },
-  count: {
-    position: "absolute",
-    right: 10,
-    bottom: 10,
-    borderRadius: 14,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
   },
   quote: { borderWidth: 1, borderRadius: 10, padding: 12, gap: 5 },
   button: {

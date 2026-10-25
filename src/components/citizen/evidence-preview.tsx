@@ -23,12 +23,14 @@ export function VideoPreview({ uri }: { uri: string }) {
 export function EvidencePreview({
   media,
   onClose,
+  initialIndex = 0,
 }: {
   media: PreviewMedia[];
   onClose: () => void;
+  initialIndex?: number;
 }) {
   const { colors } = useTheme(),
-    [index, setIndex] = useState(0),
+    [index, setIndex] = useState(() => Math.max(0, Math.min(initialIndex, media.length - 1))),
     [error, setError] = useState(false);
   const item = media[index];
   return (

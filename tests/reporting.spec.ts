@@ -1,5 +1,6 @@
 import { test, expect, type Page, type Route } from "@playwright/test";
 import { source as discussionSource, official as discussionUpdate, postId as discussionPostId, siblingId, quoteId } from "./discussion-data";
+import { selectRoadSegment } from "../src/lib/roads";
 const origin = process.env.SURIOS_TEST_API_ORIGIN || "http://127.0.0.1:5185";
 const user = {
   id: "demo-citizen",
@@ -1097,4 +1098,76 @@ test("feed deep links also load a hazard outside the latest map snapshot", async
     }),
   ).toBeVisible();
   expect(details).toBe(1);
+});
+
+test("compact home composer starts a post with photos and keeps location accessible", async ({ page }) => {
+  const errors = await setup(page);
+  await page.setViewportSize({ width: 375, height: 812 });
+  await expect(page.getByText("Community feed", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("See something that needs attention?", { exact: true })).toHaveCount(0);
+  const picker = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: "Start a post with photos", exact: true }).click();
+  const files = await picker;
+  expect(await files.element().getAttribute("accept")).toContain("image");
+  await files.setFiles("assets/images/icon.png");
+  await expect(page.getByRole("heading", { name: "Start a post", exact: true })).toBeVisible();
+  await expect(page.getByLabel("Selected post cover")).toBeVisible();
+  await expect(page.getByText("1/6", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Point pin", exact: true })).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test("home video action requests videos rather than the photo picker", async ({ page }) => {
+  const errors = await setup(page);
+  const picker = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: "Start a post with video", exact: true }).click();
+  const files = await picker;
+  const accept = await files.element().getAttribute("accept");
+  expect(accept).toContain("video");
+  expect(accept).not.toContain("image");
+  expect(errors).toEqual([]);
+});
+
+test("post gallery shows the saved cover, switches thumbnails and maps, and opens selected evidence", async ({ page }) => {
+  const section = selectRoadSegment({ ...road, coordinates: road.coordinates as [number, number][] }, 10, 90);
+  const media = Array.from({ length: 6 }, (_, i) => ({ id: `gallery-${i}`, kind: "photo", name: `Gallery photo ${i}`, url: `/media/gallery-${i}.png`, mimeType: "image/png" }));
+  const errors = await setup(page, async (route, path) => {
+    if (path !== "/api/community/posts") return false;
+    await json(route, { feed: [{ kind: "post", post: { ...post(), latitude: 14.2813, longitude: 121.4173, roadSegment: section, media, coverId: "gallery-2" } }], currentPage: 1, hasMore: false });
+    return true;
+  });
+  await page.setViewportSize({ width: 375, height: 812 });
+  const gallery = page.getByTestId("post-media-gallery");
+  await gallery.scrollIntoViewIfNeeded();
+  await expect(gallery.getByRole("button", { name: "View photo: Gallery photo 2", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /View \d+ attached/ })).toHaveCount(0);
+  await expect(gallery.getByText("+3", { exact: true })).toBeVisible();
+  for (const label of ["Show photo: Gallery photo 0", "Show photo: Gallery photo 1", "Show location map for Demo published drain"]) {
+    const tile = await gallery.getByRole("button", { name: label, exact: true }).boundingBox();
+    expect(tile!.width).toBeGreaterThanOrEqual(48);
+    expect(tile!.height).toBeGreaterThanOrEqual(48);
+  }
+  await page.screenshot({ path: "artifacts/feed-gallery-mobile.png" });
+  await gallery.getByRole("button", { name: "Show photo: Gallery photo 0", exact: true }).click();
+  await gallery.getByRole("button", { name: "View photo: Gallery photo 0", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Evidence", exact: true })).toBeVisible();
+  await expect(page.getByText("2 of 6", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Close Evidence", exact: true }).click();
+  await gallery.getByRole("button", { name: "Show location map for Demo published drain", exact: true }).click();
+  const frame = page.frameLocator('iframe[title="Location map for Demo published drain"]');
+  await expect(frame.locator(".road-end")).toHaveCount(2);
+  await expect(frame.locator(".leaflet-overlay-pane canvas")).toBeVisible();
+  await page.screenshot({ path: "artifacts/feed-gallery-map-mobile.png" });
+  await gallery.getByRole("button", { name: "Next media", exact: true }).click();
+  await expect(gallery.getByRole("button", { name: "View photo: Gallery photo 2", exact: true })).toBeVisible();
+  await page.setViewportSize({ width: 812, height: 375 });
+  await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+  await page.addStyleTag({ content: "[dir='auto'] { font-size: 22px !important; line-height: 30px !important; }" });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  const map = await page.getByRole("button", { name: "Map", exact: true }).boundingBox();
+  const create = await page.getByRole("button", { name: "Create a report", exact: true }).boundingBox();
+  const updates = await page.getByRole("button", { name: "Updates", exact: true }).boundingBox();
+  expect(create!.x - map!.x).toBeLessThan(80);
+  expect(updates!.x - create!.x).toBeLessThan(80);
+  expect(errors).toEqual([]);
 });

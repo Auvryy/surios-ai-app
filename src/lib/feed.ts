@@ -1,6 +1,7 @@
 import { isRecord } from "../auth/contracts";
 import { ApiError } from "./api-client";
-import { parseMedia, type PostMedia } from "./report-contracts";
+import { parseMedia, parseRoadSegment, type PostMedia } from "./report-contracts";
+import { validCoordinate, type Coordinate, type RoadSegment } from "./roads";
 
 export type FeedCard = {
   id: string;
@@ -24,6 +25,9 @@ export type FeedCard = {
   originalTitle: string | null;
   reportId: string | null;
   media: PostMedia[];
+  coverId: string | null;
+  point: Coordinate | null;
+  roadSegment: RoadSegment | null;
 };
 export type FeedPage = {
   feed: FeedCard[];
@@ -116,6 +120,9 @@ export function parseFeedPage(value: unknown): FeedPage {
           : null,
       originalTitle: isRecord(quote) ? post.title : null,
       reportId: typeof post.reportId === "string" ? post.reportId : null,
+      coverId: !isRecord(quote) && typeof post.coverId === "string" ? post.coverId : null,
+      point: validCoordinate([post.latitude, post.longitude]) ? [post.latitude as number, post.longitude as number] : null,
+      roadSegment: parseRoadSegment(post.roadSegment),
       media: parseMedia([
         ...new Map(
           [
