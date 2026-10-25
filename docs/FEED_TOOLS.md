@@ -2,6 +2,12 @@
 
 The citizen feed uses the website's existing saved records, search rules and permissions. This batch adds no backend, database, migration, credentials or email dependency. Notification-inbox deployment requirements are separate; see [NOTIFICATIONS.md](NOTIFICATIONS.md).
 
+## Home composer and evidence previews
+
+Home begins with the signed-in user's avatar and a compact post prompt, followed by **Photos**, **Video** and **Location** actions. Photos/video open their corresponding system picker and carry the selected files into the same report composer; cancellation keeps the feed. Location opens the composer with both location-selection modes available. Search and Liked posts hide this entry card as before. The bottom bar keeps Map and Updates close to the center camera while retaining accessible tap areas.
+
+Feed/profile cards display the saved cover with an overlaid vertical strip of other photo/video previews and a Map tile. Tapping a thumbnail changes the cover; tapping the cover opens the selected full-size evidence. Previous/Next reaches every attachment, and a `+N` overlay indicates additional items beyond the visible previews. The Map tile uses the post's saved coordinates and validated road section, loading the local street-map renderer only when selected. The map counter opens the canonical hazard. Missing coordinates do not generate a guessed preview; the existing hazard-map action remains available.
+
 ## Finding posts
 
 Use **Search community** to search people, places and post text. Submit with the keyboard Search action or arrow button. Queries are normalized and limited to 100 characters. Search runs on the server's full dataset rather than only downloaded cards.

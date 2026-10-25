@@ -18,6 +18,8 @@ Open **Map** in the bottom navigation. The map starts around Santa Cruz and fits
 
 ## Create a post
 
+On Home, **Photos** or **Video** opens the corresponding picker and starts a post with that evidence already attached. The compact prompt, **Location**, center **Post** action and map camera all open the same composer. The introductory feed text has been replaced by these actions.
+
 1. Add a headline and caption describing what is visible.
 2. Choose photos/videos from the system library, or open the camera for a photo. Choose the cover using the thumbnails. The large photo preview uses cover sizing; evidence can be opened separately.
 3. Press **Assess evidence**. The app uploads multipart files and reporter context to `/api/community/assess`. Only the server invokes Gemini. Review its returned asset type, severity, summary, visible evidence, reporter claims, confidence and limitations.
