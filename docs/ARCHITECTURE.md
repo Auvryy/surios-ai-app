@@ -2,7 +2,7 @@
 
 ## Implemented system
 
-SuriOS Mobile is an Expo-managed React Native client of the existing SvelteKit backend on Azure. The website and app share accounts, reports, uploaded evidence, canonical hazards and government updates in the existing PostgreSQL database. The app implements citizen signup/login, secure sessions, saved feed reads, a live hazard map, camera/library evidence selection, foreground GPS/manual locations, road sections, assessment drafts and publishing.
+SuriOS Mobile is an Expo-managed React Native client of the existing SvelteKit backend on Azure. The website and app share accounts, profiles, reports, uploaded evidence, canonical hazards and government updates in the existing PostgreSQL database. The app implements citizen signup/login, secure sessions, profile editing and personal post history, saved feed reads, a live hazard map, camera/library evidence selection, foreground GPS/manual locations, road sections, assessment drafts and publishing.
 
 The app renders native forms, navigation, cards, buttons and sheets using React Native primitives and shared orange light-only tokens. Expo Router owns protected routes. Only the map canvas runs a bundled local Leaflet document inside a native WebView; browser preview uses a sandboxed iframe with the same document. There is no second backend/database or client-side Gemini integration.
 
@@ -26,7 +26,7 @@ Map tile requests go directly to OpenStreetMap without session headers. Road loo
 
 | Layer | Technology/location | Purpose and boundary |
 | --- | --- | --- |
-| Routing and screens | Expo Router, `src/app` | Entry/onboarding, authentication, protected citizen area, Home alias and About. No SQL or AI logic. |
+| Routing and screens | Expo Router, `src/app` | Entry/onboarding, authentication, protected citizen area, Home alias, Profile and About. Protected links retain their destination during session verification; screen gates hold private data until the account is active. No SQL or AI logic. |
 | Presentation | React Native, `src/components` | Native feed, sheets, evidence/video preview, composer, map controls and bottom navigation; shadcn-like flat surfaces and borders. |
 | Design tokens | `src/constants/theme.ts` | Orange, fixed light appearance, readable surface/text/error/success colors. Device dark mode does not change the theme. |
 | Account/session | `src/auth` | Validated account contracts, restore/login/logout, approval handling, origin-bound credentials, expiry and race protection. |
@@ -34,6 +34,7 @@ Map tile requests go directly to OpenStreetMap without session headers. Road loo
 | Browser credential storage | Platform `.web` adapter | Tab-scoped sessionStorage; not localStorage or AsyncStorage. |
 | API transport | `src/lib/api-client.ts` | JSON/multipart, bearer headers, cancellation, bounded timeouts, origin/path checks and server error details. Multipart boundaries come from the transport. |
 | Domain contracts | `src/lib/feed.ts`, `map-data.ts`, `report-contracts.ts` | Validate API data before rendering; preserve canonical status/severity and source/resolution links. |
+| Own profile | `src/lib/profile.ts`, `profile-media.ts`, `src/components/profile` | Validate the signed-in account's profile, personal cumulative feed and office statistics; save public name, office fields and multipart photos through the existing API. Profile images are trusted public `/media` URLs. |
 | Reporting lifecycle | `src/reporting/report-controller.ts` | In-memory form/draft state, evidence/context invalidation, cancellation/discard, cover mapping and idempotent publication. |
 | Device evidence | Expo ImagePicker / FileSystem | System library and camera, file metadata and URI uploads. No base64 evidence copies in app state. |
 | Device location | Expo Location | Foreground single location fix, permission/timeout handling and manual fallback. No background tracking. |
@@ -130,6 +131,7 @@ Severity, support and priority remain separate returned values. The app does not
 | --- | --- | --- |
 | Account | `/api/auth/*`, `/api/account` | Field retention, approval screen, restore/retry, clear on 401 |
 | Saved feed | `/api/community/posts` | Cumulative pages replace data; refresh/retry; public links use backend origin |
+| Profile | `/api/profile` GET/POST | Owned profile and personal post history; retained editor input/photos on errors, photo removal flags, session refresh after confirmed saves |
 | Map | `/api/map/reports`, `/api/map/reports/:id` | Last loaded reports, accessible list, direct older-hazard lookup |
 | Nearby roads | `/api/roads?lat=...&lng=...` | Stale/repeated lookup guard, server message, point fallback |
 | Assessment | `/api/community/assess` | Retained files/text, longer timeout, cancellation, reason/evidence on rejection |
@@ -146,4 +148,4 @@ Every EXPO_PUBLIC value is public build configuration. Gemini/DB/SMTP credential
 
 Type/lint checks, browser behavioral tests, real local-backend persistence checks, Expo Doctor and web/Android exports cover different boundaries. Fixture tests use an isolated export/API origin; opt-in reporting integration uses a disposable database, loopback fake Gemini and actual OSM road geometry. Neither a browser test nor an Android JS export proves native execution or creates an APK. See [REPORTING.md](REPORTING.md) and [AUTHENTICATION.md](AUTHENTICATION.md).
 
-Remaining work: physical-device camera/GPS/WebView/video/session validation, in-app discussions/reactions/reposts, profile editing, notifications, launcher artwork, dedicated package identifiers, build/signing configuration and distribution. Government administration remains on the website. Offline drafts, background upload and push notifications are separate future features.
+Remaining work: physical-device camera/GPS/WebView/video/session and profile photo-picker validation, in-app discussions/reactions/reposts, notifications, launcher artwork, dedicated package identifiers, build/signing configuration and distribution. Government administration remains on the website. Offline drafts, background upload and push notifications are separate future features. Profile contracts, UI and verification are described in [PROFILE.md](PROFILE.md).

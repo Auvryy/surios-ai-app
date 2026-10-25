@@ -25,12 +25,13 @@ The mobile client connects **accounts, the saved community feed, the hazard map 
 - Real citizen registration and sign-in with the same accounts as the website; government/admin accounts can sign in, with pending/rejected applications held at their approval screen.
 - Native session tokens in Expo SecureStore, browser-preview tokens in tab-scoped sessionStorage, server-validated restoration, expiry handling and logout.
 - Saved citizen posts and official updates, photo previews, cumulative pagination, refresh/retry and links to the website's original posts and resolution evidence.
+- Profile tab and protected `/profile` route with the website's cover/avatar layout, saved personal post history, editable name and photos, and office details/statistics for government accounts. Changes use the existing Azure profile API and refresh the shared account identity.
 
 **First run:** intro completion is stored locally on the device. New users see three introduction slides; the last step and Skip open registration. A valid restored session opens the citizen feed. Otherwise returning users see sign-in. Successful citizen registration creates an active account without requiring email delivery.
 
 **Reporting:** camera/library evidence, photos/videos and cover selection, foreground GPS/manual pins, mapped road sections, server AI assessment, draft cancellation and real publishing. The map includes filters, clustering, road lines, source/evidence links and official resolution links.
 
-**Still planned:** in-app discussions, reactions, reposting, profile editing and notifications. Full discussions and official resolution evidence open on the website. Launcher icons remain Expo placeholders. Azure bearer API and browser login/session/feed/logout were verified at `https://surios.site`; localhost browser origins are now allowlisted. Real-device authentication/storage execution still requires device validation; browser tests and bundle exports do not prove it.
+**Still planned:** in-app discussions, reactions, reposting and notifications. Full discussions and official resolution evidence open on the website. Launcher icons remain Expo placeholders. Azure bearer API and browser login/session/feed/logout were verified at `https://surios.site`; localhost browser origins are now allowlisted. Real-device authentication/storage execution still requires device validation; browser tests and bundle exports do not prove it.
 
 ### Reporting scope
 
@@ -45,6 +46,7 @@ Road pavement; bridges and footbridges; drainage and flood canals; streetlights 
 | [Roadmap](docs/ROADMAP.md) | Ordered implementation phases and acceptance criteria |
 | [Map and reporting](docs/REPORTING.md) | Field workflow, map controls, permissions, draft lifecycle and verification |
 | [Authentication](docs/AUTHENTICATION.md) | Shared account flow, session storage, Azure/local setup, failures and tests |
+| [Profiles](docs/PROFILE.md) | Website-matched profile design, photo/name editing, office details, Azure contracts and verification |
 | [Agent quick reference](AGENTS.md) | Seven operating rules, workspace isolation and user-managed branch workflow |
 | [Engineering constitution](GEMINI.md) | Full mobile stack, code, security, UI, assessment and Git instructions |
 
@@ -134,7 +136,7 @@ Android export verifies the JavaScript bundle; it does **not** produce an APK or
 
 ```text
 src/
-  app/                 Entry gate, onboarding, auth, citizen feed/Home, About routes
+  app/                 Entry gate, onboarding, auth, citizen feed/Home, protected Profile and About routes
   components/          Shared React Native UI, citizen navigation, map controls and report composer
   config/              Public environment configuration
   auth/                Account contracts, session controller/provider and platform-specific token storage
