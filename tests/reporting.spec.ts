@@ -823,6 +823,109 @@ test("road pin can be dragged with a landing shadow and resolves a mapped road o
   ).toBeVisible();
   expect(lookups).toBe(1);
 });
+test("holding a pin near the map edge pans continuously, keeps its shadow and locks only the form scroll", async ({ page }) => {
+  const errors = await setup(page);
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await composer(page);
+  const iframe = page.locator('iframe[title="Report location map"]');
+  await iframe.scrollIntoViewIfNeeded();
+  const frame = page.frameLocator('iframe[title="Report location map"]');
+  const marker = frame.locator(".drag-target");
+  const box = await marker.boundingBox();
+  const map = await iframe.boundingBox();
+  expect(box!.width).toBeGreaterThanOrEqual(48);
+  expect(box!.height).toBeGreaterThanOrEqual(48);
+  const scroller = async () => iframe.evaluate((element) => {
+    for (let parent = element.parentElement; parent; parent = parent.parentElement) {
+      if (parent.scrollHeight > parent.clientHeight && ["auto", "scroll", "hidden"].includes(getComputedStyle(parent).overflowY))
+        return { top: parent.scrollTop, overflow: getComputedStyle(parent).overflowY };
+    }
+    return null;
+  });
+  const scrollBefore = await scroller();
+  await page.mouse.move(box!.x + 24, box!.y + 24);
+  await page.mouse.down();
+  await page.mouse.move(map!.x + map!.width - 20, map!.y + map!.height / 2, { steps: 10 });
+  await expect(frame.locator(".lifting")).toBeAttached();
+  await expect.poll(async () => (await scroller())?.overflow).toBe("hidden");
+  const initialTransform = await frame.locator(".leaflet-map-pane").getAttribute("style");
+  await expect.poll(() => frame.locator(".leaflet-map-pane").getAttribute("style")).not.toBe(initialTransform);
+  expect((await scroller())?.top).toBe(scrollBefore?.top);
+  await expect(frame.locator(".drop-shadow")).toBeVisible();
+  await page.mouse.up();
+  await expect(page.getByText(/^Pin: /)).toBeVisible();
+  await expect.poll(async () => (await scroller())?.overflow).toBe(scrollBefore?.overflow);
+  const afterDrop = await frame.locator(".leaflet-map-pane").getAttribute("style");
+  await page.waitForTimeout(200);
+  expect(await frame.locator(".leaflet-map-pane").getAttribute("style")).toBe(afterDrop);
+  expect(errors).toEqual([]);
+});
+
+test("touch dragging pans the map and cancellation releases the form scroll", async ({ page, context }) => {
+  const errors = await setup(page);
+  const cdp = await context.newCDPSession(page);
+  await cdp.send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 2 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await composer(page);
+  const iframe = page.locator('iframe[title="Report location map"]');
+  await iframe.scrollIntoViewIfNeeded();
+  const frame = page.frameLocator('iframe[title="Report location map"]');
+  const box = await frame.locator(".drag-target").boundingBox();
+  const map = await iframe.boundingBox();
+  const overflow = () => iframe.evaluate((element) => {
+    for (let parent = element.parentElement; parent; parent = parent.parentElement) {
+      if (parent.scrollHeight > parent.clientHeight && ["auto", "scroll", "hidden"].includes(getComputedStyle(parent).overflowY))
+        return getComputedStyle(parent).overflowY;
+    }
+    return null;
+  });
+  const before = await overflow();
+  const startX = box!.x + 24, startY = box!.y + 24;
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ id: 1, x: startX, y: startY }] });
+  for (let step = 1; step <= 8; step++)
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ id: 1, x: startX + (map!.x + 20 - startX) * step / 8, y: startY }] });
+  await expect(frame.locator(".lifting")).toBeAttached();
+  await expect.poll(overflow).toBe("hidden");
+  const pan = await frame.locator(".leaflet-map-pane").getAttribute("style");
+  await expect.poll(() => frame.locator(".leaflet-map-pane").getAttribute("style")).not.toBe(pan);
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchCancel", touchPoints: [] });
+  await expect.poll(overflow).toBe(before);
+  await expect(frame.locator(".lifting")).toHaveCount(0);
+  await cdp.detach();
+  expect(errors).toEqual([]);
+});
+
+for (const which of ["A", "B"]) {
+  test(`road handle ${which} pans at the edge and still snaps to a valid road section`, async ({ page }) => {
+    const errors = await setup(page);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await composer(page);
+    await page.getByRole("button", { name: "Road section", exact: true }).click();
+    await page.getByRole("button", { name: "Select road at map center", exact: true }).click();
+    await expect(page.getByText("Demo mapped road · 80 m", { exact: true })).toBeVisible();
+    const iframe = page.locator('iframe[title="Report location map"]');
+    await iframe.scrollIntoViewIfNeeded();
+    const frame = page.frameLocator('iframe[title="Report location map"]');
+    const marker = frame.locator(".drag-target").filter({ has: frame.getByText(which, { exact: true }) });
+    const box = await marker.boundingBox();
+    const map = await iframe.boundingBox();
+    expect(box!.width).toBeGreaterThanOrEqual(48);
+    await page.mouse.move(box!.x + 24, box!.y + 24);
+    await page.mouse.down();
+    await page.mouse.move(map!.x + map!.width / 2, map!.y + (which === "A" ? map!.height - 20 : 20), { steps: 12 });
+    const initialTransform = await frame.locator(".leaflet-map-pane").getAttribute("style");
+    await expect.poll(() => frame.locator(".leaflet-map-pane").getAttribute("style")).not.toBe(initialTransform);
+    await page.mouse.up();
+    await expect(page.getByText(/^Demo mapped road · \d+ m$/)).toBeVisible();
+    const label = await page.getByText(/^Demo mapped road · \d+ m$/).textContent();
+    const length = Number(label!.match(/· (\d+) m/)![1]);
+    expect(length).toBeGreaterThanOrEqual(5);
+    expect(length).toBeLessThanOrEqual(500);
+    expect(errors).toEqual([]);
+  });
+}
+
 test("server validation and repeat-publish guards preserve the draft for retry", async ({
   page,
 }) => {

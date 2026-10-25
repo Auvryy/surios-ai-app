@@ -57,6 +57,7 @@ export function ReportComposer({ onClose, onPublished, initialPoint }: Props) {
     controller.getSnapshot,
   );
   const [picking, setPicking] = useState(false),
+    [mapInteracting, setMapInteracting] = useState(false),
     [discard, setDiscard] = useState(false),
     [preview, setPreview] = useState<PreviewMedia[] | null>(null);
   const alive = useRef(true),
@@ -116,6 +117,7 @@ export function ReportComposer({ onClose, onPublished, initialPoint }: Props) {
         subtitle="Public infrastructure update"
         onClose={close}
         closeDisabled={locked}
+        scrollEnabled={!mapInteracting}
         footer={
           <>
             {state.busy === "assessing" ? (
@@ -390,6 +392,7 @@ export function ReportComposer({ onClose, onPublished, initialPoint }: Props) {
           <LocationPicker
             value={state.location}
             onChange={(v) => controller.setLocation(v)}
+            onInteractionChange={setMapInteracting}
             disabled={locked}
           />
         </View>

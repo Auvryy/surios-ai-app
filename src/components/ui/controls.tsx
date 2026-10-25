@@ -236,6 +236,7 @@ export function Sheet({
   children,
   footer,
   scroll = true,
+  scrollEnabled = true,
   closeDisabled = false,
 }: {
   title: string;
@@ -244,6 +245,7 @@ export function Sheet({
   children: ReactNode;
   footer?: ReactNode;
   scroll?: boolean;
+  scrollEnabled?: boolean;
   closeDisabled?: boolean;
 }) {
   const { colors } = useTheme();
@@ -302,6 +304,7 @@ export function Sheet({
             </View>
             {scroll ? (
               <ScrollView
+                scrollEnabled={scrollEnabled}
                 keyboardShouldPersistTaps="handled"
                 contentContainerStyle={ui.sheetBody}
               >
