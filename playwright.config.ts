@@ -12,7 +12,7 @@ export default defineConfig({
   projects: [
     {
       name: "session",
-      testMatch: ["session.spec.ts", "report-controller.spec.ts", "profile-contracts.spec.ts", "settings-contracts.spec.ts", "discussion-contracts.spec.ts", "notifications-contracts.spec.ts", "feed-tools-contracts.spec.ts"],
+      testMatch: ["session.spec.ts", "report-controller.spec.ts", "native-uploads.spec.ts", "profile-contracts.spec.ts", "settings-contracts.spec.ts", "discussion-contracts.spec.ts", "notifications-contracts.spec.ts", "feed-tools-contracts.spec.ts"],
     },
     {
       name: "browser",

@@ -33,6 +33,7 @@ export type MapState = {
 };
 export type MapEvent =
   | { type: "ready" | "tiles-unavailable" | "attribution" }
+  | { type: "interaction"; active: boolean }
   | { type: "select"; ids: string[] }
   | { type: "pick" | "center"; point: Coordinate }
   | { type: "endpoint"; which: "start" | "end"; point: Coordinate };
@@ -54,6 +55,8 @@ export function parseMapEvent(input: unknown): MapEvent | null {
     return null;
   if (["ready", "tiles-unavailable", "attribution"].includes(v.type))
     return { type: v.type } as MapEvent;
+  if (v.type === "interaction" && typeof v.active === "boolean")
+    return { type: "interaction", active: v.active };
   if (
     v.type === "select" &&
     Array.isArray(v.ids) &&

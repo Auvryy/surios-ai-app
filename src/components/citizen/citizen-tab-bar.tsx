@@ -67,13 +67,13 @@ function TabItem({ item, active, onPress, unreadCount }: { item: Item; active: b
 
 const styles = StyleSheet.create({
   safe: { width: '100%', maxWidth: 520, alignSelf: 'center', borderTopWidth: 1 },
-  row: { minHeight: 68, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', paddingHorizontal: 6, columnGap: 4 },
+  row: { width: '100%', maxWidth: 360, alignSelf: 'center', minHeight: 68, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 4 },
   item: { flex: 1, minWidth: 0, minHeight: 60, alignItems: 'center', justifyContent: 'center', gap: 2, paddingVertical: 3 },
   iconWrap: { minWidth: 38, height: 31, alignItems: 'center', justifyContent: 'center', borderRadius: 16 },
   label: { fontSize: 12, lineHeight: 16 },
   badge: { position: 'absolute', top: -4, right: -9, minWidth: 19, minHeight: 19, borderRadius: 12, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center' },
   badgeText: { fontSize: 10, lineHeight: 15, fontWeight: '700' },
-  createSlot: { flex: 1, minWidth: 58, minHeight: 68, alignItems: 'center', justifyContent: 'flex-start' },
+  createSlot: { width: 58, minHeight: 68, alignItems: 'center', justifyContent: 'flex-start' },
   createButton: { width: 58, height: 58, marginTop: -18, borderRadius: 29, borderWidth: 4, borderColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', elevation: 3, shadowColor: '#542000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.2, shadowRadius: 5 },
   createLabel: { marginTop: -1, fontSize: 12, lineHeight: 16, fontWeight: '700' },
 });

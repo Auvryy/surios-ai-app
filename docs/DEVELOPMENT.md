@@ -29,7 +29,25 @@ Install compatible Expo Go on the phone, put phone and PC on the same LAN and ru
 
 For a desktop window displaying the actual phone, optionally install `scrcpy` and `android-tools` through pacman, enable USB debugging, authorize the PC and run `scrcpy`. This runs the app on the phone, not on Linux. Neither package is needed for the browser.
 
-A dedicated Expo development build will be needed when adding native dependencies unavailable in Expo Go. EAS cloud builds can avoid local Android build tooling; account setup, build profiles and signing will be configured in that phase. Local Android builds need the Android SDK and JDK. Native iOS local builds require macOS/Xcode.
+USB can also carry the Expo connection when Wi-Fi access is unreliable. With the authorized phone attached, reserve a separate port from the browser preview:
+
+```bash
+adb reverse tcp:8083 tcp:8083
+npm start -- --localhost --port 8083
+```
+
+In another terminal, open the development session on the phone:
+
+```bash
+adb shell am start -a android.intent.action.VIEW -d 'exp://127.0.0.1:8083'
+scrcpy --no-control
+```
+
+`--no-control` mirrors the phone without injecting input, useful on devices that require an additional security setting for remote control. This USB mapping connects to Expo on the PC; API requests still use the configured Azure HTTPS origin. Reload after code updates, but finish or explicitly discard an open report first because composer contents are held in memory.
+
+Expo Go is the development host and keeps its own launcher icon. The configured SuriOS icon, Orie assets and splash screen appear in a separately built SuriOS app. Installing Expo Go or exporting Android JavaScript does not create that APK. The linked Expo project's `preview` profile has produced a signed standalone Android APK, now installed with initial cold-launch and branding checks passed. Full signed-in device acceptance remains. See [Android APK setup](ANDROID_BUILD.md).
+
+A dedicated Expo development build will be needed when adding native dependencies unavailable in Expo Go. The prepared `preview` profile produces a standalone release APK for phone testing; it does not require `expo-dev-client`. EAS cloud builds avoid local Android compilation tools. Local Android builds need the Android SDK and JDK. Native iOS local builds require macOS/Xcode.
 
 ## Backend origin
 

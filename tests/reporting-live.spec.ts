@@ -76,7 +76,7 @@ test("actual mobile UI uploads, assesses, saves a post, and opens the same store
   await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Community feed", exact: true }),
+    page.getByRole("button", { name: "Start a community infrastructure report", exact: true }),
   ).toBeVisible();
   await page
     .getByRole("button", { name: "Create a report", exact: true })

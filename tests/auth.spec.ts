@@ -137,7 +137,7 @@ test('a revoked saved session clears credentials and requests a fresh sign-in', 
     return false;
   });
   await login(page);
-  await expect(page.getByText('Community feed', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Start a community infrastructure report', exact: true })).toBeVisible();
   await page.reload();
   await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible();
   await expect(page.getByRole('alert')).toContainText('session has ended');
@@ -151,7 +151,7 @@ test('an offline saved session offers retry and keeps the credential until verif
     return false;
   });
   await login(page);
-  await expect(page.getByText('Community feed', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Start a community infrastructure report', exact: true })).toBeVisible();
   offline = true;
   await page.reload();
   await expect(page.getByText('Let’s reconnect', { exact: true })).toBeVisible();
@@ -191,7 +191,7 @@ test('cumulative feed pagination replaces items instead of duplicating them', as
   await expect(page.getByText('Demo drainage report one', { exact: true })).toHaveCount(1);
 });
 
-test('official photo attachments appear in the feed with an overflow count', async ({ page }) => {
+test('official photo attachments appear as selectable previews in the feed', async ({ page }) => {
   await page.route(`${origin}/media/*.png`, route => route.fulfill({ contentType: 'image/png', path: 'assets/images/icon.png' }));
   await mock(page, async (route, path) => {
     if (path !== '/api/community/posts') return false;
@@ -200,8 +200,9 @@ test('official photo attachments appear in the feed with an overflow count', asy
     return true;
   });
   await login(page);
-  await expect(page.getByRole('img', { name: 'Photo attached by Demo municipal office' })).toBeAttached();
-  await expect(page.getByText('+1 photos', { exact: true })).toBeAttached();
+  await expect(page.getByRole('button', { name: 'View photo: one.png', exact: true })).toBeAttached();
+  await page.getByRole('button', { name: 'Show photo: two.png', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'View photo: two.png', exact: true })).toBeAttached();
   await expect(page.getByRole('link', { name: 'Resolved: view official explanation', exact: true })).toBeAttached();
 });
 

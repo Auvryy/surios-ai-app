@@ -165,7 +165,7 @@ async function authenticate(page: Page) {
   await page.getByLabel("Password", { exact: true }).fill("DemoPassword123!");
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Community feed", exact: true }),
+    page.getByRole("button", { name: "Start a community infrastructure report", exact: true }),
   ).toBeVisible();
 }
 async function open(page: Page) {
@@ -217,7 +217,7 @@ test("feed and profile open native details, Back refreshes, and direct links res
   ).toBeVisible();
   await page.getByRole("button", { name: "Back", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Community feed", exact: true }),
+    page.getByRole("button", { name: "Start a community infrastructure report", exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Profile", exact: true }).click();
   await page.getByRole("link", { name: "Open post", exact: true }).click();

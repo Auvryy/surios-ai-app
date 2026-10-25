@@ -27,10 +27,12 @@ export function LocationPicker({
   value,
   onChange,
   disabled = false,
+  onInteractionChange,
 }: {
   value: ReportLocation;
   onChange: (value: ReportLocation) => void;
   disabled?: boolean;
+  onInteractionChange?: (active: boolean) => void;
 }) {
   const { colors } = useTheme(),
     { request } = useSession();
@@ -201,6 +203,7 @@ export function LocationPicker({
     }
   };
   const event = (event: MapEvent) => {
+    if (event.type === "interaction") onInteractionChange?.(event.active);
     if (event.type === "center") setCenter(event.point);
     if (event.type === "pick") void selectAt(event.point);
     if (event.type === "endpoint") moveEnd(event.which, event.point);
@@ -237,8 +240,8 @@ export function LocationPicker({
       </View>
       <Text style={[ui.caption, { color: colors.muted }]}>
         {value.mode === "point"
-          ? "Tap the map or drag the pin to the issue."
-          : "Tap a road, or position the map and drop the pin. Mark 5–500 metres with A and B."}
+          ? "Tap to place the pin, or hold and drag it. Keep it near an edge to move the map."
+          : "Tap a road or drop the pin. Drag A or B near an edge to move the map. Mark 5–500 metres."}
       </Text>
       <View style={[styles.map, { borderColor: colors.border }]}>
         <StreetMap

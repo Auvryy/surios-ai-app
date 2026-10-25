@@ -141,7 +141,7 @@ npx expo-doctor
 npm test
 ```
 
-Android export verifies the JavaScript bundle; it does **not** produce an APK or prove native-device behavior. Native builds, signing, store submission and EAS project setup are not configured yet.
+Android export verifies the JavaScript bundle; it does **not** produce an APK or prove native-device behavior. A signed standalone Android preview APK has now built successfully and is installed on an Android 16 phone. Initial cold launch, SuriOS name, Orie icon and light onboarding passed; full signed-in device checks remain. See [install SuriOS on Android](docs/ANDROID_BUILD.md). Store submission is separate.
 
 ## 7. Repository layout
 
@@ -185,4 +185,4 @@ Read [AGENTS.md](AGENTS.md) and [GEMINI.md](GEMINI.md) before editing. Start gen
 
 Validate the camera, GPS, map gestures, session storage and upload recovery on your physical device. Browser reporting and a real local backend save/read flow are tested. In-app discussions, reactions and image reposts are implemented and verified against an isolated real backend; device sharing and native media still need phone acceptance. Government administration stays on the website initially. See the [roadmap](docs/ROADMAP.md).
 
-The initial Expo toolchain has unresolved npm audit findings; see the [dependency audit note](docs/DEVELOPMENT.md#initial-dependency-audit). This foundation is for development and is not a release-ready APK.
+The initial Expo toolchain has unresolved npm audit findings; see the [dependency audit note](docs/DEVELOPMENT.md#initial-dependency-audit). The signed preview APK is for testing; full release acceptance remains outstanding.

@@ -22,13 +22,24 @@ export function StreetMap({
       );
   }, [state]);
   return (
-    <View style={styles.container} accessibilityLabel={label}>
+    <View
+      style={styles.container}
+      accessibilityLabel={label}
+      onTouchStart={() => onEvent({ type: "interaction", active: true })}
+      onTouchEnd={(event) => {
+        if (!event.nativeEvent.touches.length)
+          onEvent({ type: "interaction", active: false });
+      }}
+      onTouchCancel={() => onEvent({ type: "interaction", active: false })}
+    >
       <WebView<object>
         ref={ref}
         source={source}
         style={styles.container}
         originWhitelist={["*"]}
         javaScriptEnabled
+        nestedScrollEnabled
+        bounces={false}
         domStorageEnabled={false}
         sharedCookiesEnabled={false}
         thirdPartyCookiesEnabled={false}
@@ -52,7 +63,10 @@ export function StreetMap({
             void Linking.openURL("https://www.openstreetmap.org/copyright");
           onEvent(message);
         }}
-        onError={() => onEvent({ type: "tiles-unavailable" })}
+        onError={() => {
+          onEvent({ type: "interaction", active: false });
+          onEvent({ type: "tiles-unavailable" });
+        }}
       />
     </View>
   );

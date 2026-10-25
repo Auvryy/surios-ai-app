@@ -1,5 +1,6 @@
 import { test, expect, type Page, type Route } from "@playwright/test";
 import { source as discussionSource, official as discussionUpdate, postId as discussionPostId, siblingId, quoteId } from "./discussion-data";
+import { selectRoadSegment } from "../src/lib/roads";
 const origin = process.env.SURIOS_TEST_API_ORIGIN || "http://127.0.0.1:5185";
 const user = {
   id: "demo-citizen",
@@ -224,7 +225,7 @@ async function setup(
   await page.getByLabel("Password", { exact: true }).fill("DemoPassword123!");
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Community feed", exact: true }),
+    page.getByRole("button", { name: "Start a community infrastructure report", exact: true }),
   ).toBeVisible();
   return errors;
 }
@@ -823,6 +824,109 @@ test("road pin can be dragged with a landing shadow and resolves a mapped road o
   ).toBeVisible();
   expect(lookups).toBe(1);
 });
+test("holding a pin near the map edge pans continuously, keeps its shadow and locks only the form scroll", async ({ page }) => {
+  const errors = await setup(page);
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await composer(page);
+  const iframe = page.locator('iframe[title="Report location map"]');
+  await iframe.scrollIntoViewIfNeeded();
+  const frame = page.frameLocator('iframe[title="Report location map"]');
+  const marker = frame.locator(".drag-target");
+  const box = await marker.boundingBox();
+  const map = await iframe.boundingBox();
+  expect(box!.width).toBeGreaterThanOrEqual(48);
+  expect(box!.height).toBeGreaterThanOrEqual(48);
+  const scroller = async () => iframe.evaluate((element) => {
+    for (let parent = element.parentElement; parent; parent = parent.parentElement) {
+      if (parent.scrollHeight > parent.clientHeight && ["auto", "scroll", "hidden"].includes(getComputedStyle(parent).overflowY))
+        return { top: parent.scrollTop, overflow: getComputedStyle(parent).overflowY };
+    }
+    return null;
+  });
+  const scrollBefore = await scroller();
+  await page.mouse.move(box!.x + 24, box!.y + 24);
+  await page.mouse.down();
+  await page.mouse.move(map!.x + map!.width - 20, map!.y + map!.height / 2, { steps: 10 });
+  await expect(frame.locator(".lifting")).toBeAttached();
+  await expect.poll(async () => (await scroller())?.overflow).toBe("hidden");
+  const initialTransform = await frame.locator(".leaflet-map-pane").getAttribute("style");
+  await expect.poll(() => frame.locator(".leaflet-map-pane").getAttribute("style")).not.toBe(initialTransform);
+  expect((await scroller())?.top).toBe(scrollBefore?.top);
+  await expect(frame.locator(".drop-shadow")).toBeVisible();
+  await page.mouse.up();
+  await expect(page.getByText(/^Pin: /)).toBeVisible();
+  await expect.poll(async () => (await scroller())?.overflow).toBe(scrollBefore?.overflow);
+  const afterDrop = await frame.locator(".leaflet-map-pane").getAttribute("style");
+  await page.waitForTimeout(200);
+  expect(await frame.locator(".leaflet-map-pane").getAttribute("style")).toBe(afterDrop);
+  expect(errors).toEqual([]);
+});
+
+test("touch dragging pans the map and cancellation releases the form scroll", async ({ page, context }) => {
+  const errors = await setup(page);
+  const cdp = await context.newCDPSession(page);
+  await cdp.send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 2 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await composer(page);
+  const iframe = page.locator('iframe[title="Report location map"]');
+  await iframe.scrollIntoViewIfNeeded();
+  const frame = page.frameLocator('iframe[title="Report location map"]');
+  const box = await frame.locator(".drag-target").boundingBox();
+  const map = await iframe.boundingBox();
+  const overflow = () => iframe.evaluate((element) => {
+    for (let parent = element.parentElement; parent; parent = parent.parentElement) {
+      if (parent.scrollHeight > parent.clientHeight && ["auto", "scroll", "hidden"].includes(getComputedStyle(parent).overflowY))
+        return getComputedStyle(parent).overflowY;
+    }
+    return null;
+  });
+  const before = await overflow();
+  const startX = box!.x + 24, startY = box!.y + 24;
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ id: 1, x: startX, y: startY }] });
+  for (let step = 1; step <= 8; step++)
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ id: 1, x: startX + (map!.x + 20 - startX) * step / 8, y: startY }] });
+  await expect(frame.locator(".lifting")).toBeAttached();
+  await expect.poll(overflow).toBe("hidden");
+  const pan = await frame.locator(".leaflet-map-pane").getAttribute("style");
+  await expect.poll(() => frame.locator(".leaflet-map-pane").getAttribute("style")).not.toBe(pan);
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchCancel", touchPoints: [] });
+  await expect.poll(overflow).toBe(before);
+  await expect(frame.locator(".lifting")).toHaveCount(0);
+  await cdp.detach();
+  expect(errors).toEqual([]);
+});
+
+for (const which of ["A", "B"]) {
+  test(`road handle ${which} pans at the edge and still snaps to a valid road section`, async ({ page }) => {
+    const errors = await setup(page);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await composer(page);
+    await page.getByRole("button", { name: "Road section", exact: true }).click();
+    await page.getByRole("button", { name: "Select road at map center", exact: true }).click();
+    await expect(page.getByText("Demo mapped road · 80 m", { exact: true })).toBeVisible();
+    const iframe = page.locator('iframe[title="Report location map"]');
+    await iframe.scrollIntoViewIfNeeded();
+    const frame = page.frameLocator('iframe[title="Report location map"]');
+    const marker = frame.locator(".drag-target").filter({ has: frame.getByText(which, { exact: true }) });
+    const box = await marker.boundingBox();
+    const map = await iframe.boundingBox();
+    expect(box!.width).toBeGreaterThanOrEqual(48);
+    await page.mouse.move(box!.x + 24, box!.y + 24);
+    await page.mouse.down();
+    await page.mouse.move(map!.x + map!.width / 2, map!.y + (which === "A" ? map!.height - 20 : 20), { steps: 12 });
+    const initialTransform = await frame.locator(".leaflet-map-pane").getAttribute("style");
+    await expect.poll(() => frame.locator(".leaflet-map-pane").getAttribute("style")).not.toBe(initialTransform);
+    await page.mouse.up();
+    await expect(page.getByText(/^Demo mapped road · \d+ m$/)).toBeVisible();
+    const label = await page.getByText(/^Demo mapped road · \d+ m$/).textContent();
+    const length = Number(label!.match(/· (\d+) m/)![1]);
+    expect(length).toBeGreaterThanOrEqual(5);
+    expect(length).toBeLessThanOrEqual(500);
+    expect(errors).toEqual([]);
+  });
+}
+
 test("server validation and repeat-publish guards preserve the draft for retry", async ({
   page,
 }) => {
@@ -994,4 +1098,76 @@ test("feed deep links also load a hazard outside the latest map snapshot", async
     }),
   ).toBeVisible();
   expect(details).toBe(1);
+});
+
+test("compact home composer starts a post with photos and keeps location accessible", async ({ page }) => {
+  const errors = await setup(page);
+  await page.setViewportSize({ width: 375, height: 812 });
+  await expect(page.getByText("Community feed", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("See something that needs attention?", { exact: true })).toHaveCount(0);
+  const picker = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: "Start a post with photos", exact: true }).click();
+  const files = await picker;
+  expect(await files.element().getAttribute("accept")).toContain("image");
+  await files.setFiles("assets/images/icon.png");
+  await expect(page.getByRole("heading", { name: "Start a post", exact: true })).toBeVisible();
+  await expect(page.getByLabel("Selected post cover")).toBeVisible();
+  await expect(page.getByText("1/6", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Point pin", exact: true })).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test("home video action requests videos rather than the photo picker", async ({ page }) => {
+  const errors = await setup(page);
+  const picker = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: "Start a post with video", exact: true }).click();
+  const files = await picker;
+  const accept = await files.element().getAttribute("accept");
+  expect(accept).toContain("video");
+  expect(accept).not.toContain("image");
+  expect(errors).toEqual([]);
+});
+
+test("post gallery shows the saved cover, switches thumbnails and maps, and opens selected evidence", async ({ page }) => {
+  const section = selectRoadSegment({ ...road, coordinates: road.coordinates as [number, number][] }, 10, 90);
+  const media = Array.from({ length: 6 }, (_, i) => ({ id: `gallery-${i}`, kind: "photo", name: `Gallery photo ${i}`, url: `/media/gallery-${i}.png`, mimeType: "image/png" }));
+  const errors = await setup(page, async (route, path) => {
+    if (path !== "/api/community/posts") return false;
+    await json(route, { feed: [{ kind: "post", post: { ...post(), latitude: 14.2813, longitude: 121.4173, roadSegment: section, media, coverId: "gallery-2" } }], currentPage: 1, hasMore: false });
+    return true;
+  });
+  await page.setViewportSize({ width: 375, height: 812 });
+  const gallery = page.getByTestId("post-media-gallery");
+  await gallery.scrollIntoViewIfNeeded();
+  await expect(gallery.getByRole("button", { name: "View photo: Gallery photo 2", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /View \d+ attached/ })).toHaveCount(0);
+  await expect(gallery.getByText("+3", { exact: true })).toBeVisible();
+  for (const label of ["Show photo: Gallery photo 0", "Show photo: Gallery photo 1", "Show location map for Demo published drain"]) {
+    const tile = await gallery.getByRole("button", { name: label, exact: true }).boundingBox();
+    expect(tile!.width).toBeGreaterThanOrEqual(48);
+    expect(tile!.height).toBeGreaterThanOrEqual(48);
+  }
+  await page.screenshot({ path: "artifacts/feed-gallery-mobile.png" });
+  await gallery.getByRole("button", { name: "Show photo: Gallery photo 0", exact: true }).click();
+  await gallery.getByRole("button", { name: "View photo: Gallery photo 0", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Evidence", exact: true })).toBeVisible();
+  await expect(page.getByText("2 of 6", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Close Evidence", exact: true }).click();
+  await gallery.getByRole("button", { name: "Show location map for Demo published drain", exact: true }).click();
+  const frame = page.frameLocator('iframe[title="Location map for Demo published drain"]');
+  await expect(frame.locator(".road-end")).toHaveCount(2);
+  await expect(frame.locator(".leaflet-overlay-pane canvas")).toBeVisible();
+  await page.screenshot({ path: "artifacts/feed-gallery-map-mobile.png" });
+  await gallery.getByRole("button", { name: "Next media", exact: true }).click();
+  await expect(gallery.getByRole("button", { name: "View photo: Gallery photo 2", exact: true })).toBeVisible();
+  await page.setViewportSize({ width: 812, height: 375 });
+  await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+  await page.addStyleTag({ content: "[dir='auto'] { font-size: 22px !important; line-height: 30px !important; }" });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  const map = await page.getByRole("button", { name: "Map", exact: true }).boundingBox();
+  const create = await page.getByRole("button", { name: "Create a report", exact: true }).boundingBox();
+  const updates = await page.getByRole("button", { name: "Updates", exact: true }).boundingBox();
+  expect(create!.x - map!.x).toBeLessThan(80);
+  expect(updates!.x - create!.x).toBeLessThan(80);
+  expect(errors).toEqual([]);
 });

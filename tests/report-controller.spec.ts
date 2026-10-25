@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { ApiError, createApiClient } from "../src/lib/api-client";
 import { ReportController } from "../src/reporting/report-controller";
+import { parseMapEvent } from "../src/components/map/map-protocol";
 import {
   mediaError,
   PHOTO_LIMIT,
@@ -123,6 +124,14 @@ function setup(
   return { controller, calls };
 }
 const flush = () => new Promise<void>((r) => setTimeout(r, 0));
+
+test("map interaction messages accept only an explicit boolean from the map bridge", () => {
+  expect(parseMapEvent({ source: "surios-map", type: "interaction", active: true })).toEqual({ type: "interaction", active: true });
+  expect(parseMapEvent(JSON.stringify({ source: "surios-map", type: "interaction", active: false }))).toEqual({ type: "interaction", active: false });
+  expect(parseMapEvent({ source: "other", type: "interaction", active: true })).toBeNull();
+  expect(parseMapEvent({ source: "surios-map", type: "interaction", active: "false" })).toBeNull();
+  expect(parseMapEvent({ source: "surios-map", type: "interaction" })).toBeNull();
+});
 
 test("multipart transport retains bearer and assessment ID without inventing a boundary or cookies", async () => {
   const form = new FormData();

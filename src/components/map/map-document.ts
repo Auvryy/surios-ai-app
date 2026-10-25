@@ -3,7 +3,7 @@ import leaflet from "@/assets/map/leaflet.json";
 // Both platforms run this local, token-free renderer. All API/business logic stays native.
 const runtime = String.raw`
 (function () {
-  var L = window.L, state = {mode:'explore'}, focusKey = null, dragging = false;
+  var L = window.L, state = {mode:'explore'}, focusKey = null, dragging = false, selectionKey = null;
   var map = L.map('map', {zoomControl:false, preferCanvas:true}).setView([14.2813,121.4173],14);
   var pins = L.layerGroup().addTo(map), selection = L.layerGroup().addTo(map), references = L.layerGroup().addTo(map), route = L.layerGroup().addTo(map);
   var tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
@@ -16,11 +16,24 @@ const runtime = String.raw`
     if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(message);
     else window.parent.postMessage(message, '*');
   }
+  var pointers = new Set(), interacting = false;
+  function interaction(active) {
+    if (active === interacting) return;
+    interacting = active;
+    send({type:'interaction',active:active});
+    if(!active) requestAnimationFrame(function(){drawSelection();});
+  }
+  map.getContainer().addEventListener('pointerdown',function(e){pointers.add(e.pointerId);interaction(true);},true);
+  function release(e){pointers.delete(e.pointerId);if(!pointers.size)interaction(false);}
+  window.addEventListener('pointerup',release);
+  window.addEventListener('pointercancel',release);
+  window.addEventListener('blur',function(){pointers.clear();interaction(false);});
   document.querySelector('.leaflet-control-attribution').addEventListener('click', function(e){e.preventDefault();send({type:'attribution'});});
   function icon(text, className, color) {
     var span = document.createElement('span'); span.className=className; span.textContent=text;
     if(color) span.style.backgroundColor=color;
-    return L.divIcon({className:'pin-root',html:span,iconSize:[36,40],iconAnchor:[18,38]});
+    var pin=className.indexOf('location-pin')!==-1, endpoint=className==='road-end';
+    return L.divIcon({className:'pin-root'+(pin||endpoint?' drag-target':''),html:span,iconSize:pin?[48,56]:endpoint?[48,48]:[36,40],iconAnchor:pin?[24,44]:endpoint?[24,24]:[18,38]});
   }
   function color(n){return n>=8?'#dc2626':n>=4?'#a95c00':'#64748b';}
   function drawPins() {
@@ -53,24 +66,29 @@ const runtime = String.raw`
     return L.marker(point,{interactive:false,keyboard:false,icon:L.divIcon({className:'drop-shadow',iconSize:[32,12],iconAnchor:[16,6]})}).addTo(selection);
   }
   function drawSelection() {
-    if(dragging) return;
+    if(dragging||interacting) return;
+    var point=state.point||[map.getCenter().lat,map.getCenter().lng];
+    var key=JSON.stringify([state.mode,point,state.section,state.disabled,state.reducedMotion]);
+    if(key===selectionKey) return;
+    selectionKey=key;
     selection.clearLayers();
     if(state.mode==='explore') return;
-    var point=state.point||[map.getCenter().lat,map.getCenter().lng];
     if(state.section){
       L.polyline(state.section.coordinates,{color:'#C93D00',weight:6}).addTo(selection);
+      L.circleMarker(point,{radius:4,color:'#fff',weight:2,fillColor:'#C93D00',fillOpacity:1,interactive:false}).addTo(selection);
       ['start','end'].forEach(function(which,i){
         var coords=state.section.coordinates, p=i?coords[coords.length-1]:coords[0];
-        L.marker(p,{draggable:!state.disabled,icon:icon(i?'B':'A','road-end')}).addTo(selection).on('dragstart',function(){dragging=true;}).on('dragend',function(e){dragging=false;var p=e.target.getLatLng();send({type:'endpoint',which:which,point:[p.lat,p.lng]});});
+        L.marker(p,{draggable:!state.disabled,autoPan:true,autoPanPadding:[56,56],autoPanSpeed:8,keyboard:true,title:i?'Drag road end B':'Drag road start A',icon:icon(i?'B':'A','road-end')}).addTo(selection).on('dragstart',function(){dragging=true;interaction(true);}).on('dragend',function(e){dragging=false;interaction(false);var p=e.target.getLatLng();send({type:'endpoint',which:which,point:[p.lat,p.lng]});});
       });
+      return;
     }
     var ghost=!state.point && !state.section;
     var s=shadow(point);
-    var marker=L.marker(point,{draggable:!state.disabled && (state.mode==='point'||ghost),keyboard:true,title:ghost?'Drop pin here':'Drag report pin',icon:icon('','location-pin'+(ghost&&!state.reducedMotion?' hopping':''))}).addTo(selection);
+    var marker=L.marker(point,{draggable:!state.disabled && (state.mode==='point'||ghost),autoPan:true,autoPanPadding:[56,56],autoPanSpeed:8,keyboard:true,title:ghost?'Drop pin here':'Drag report pin',icon:icon('','location-pin'+(ghost&&!state.reducedMotion?' hopping':''))}).addTo(selection);
     if(ghost) marker.on('click',function(){if(!state.disabled)send({type:'pick',point:point});});
-    marker.on('dragstart',function(){dragging=true;marker.getElement().classList.add('lifting');});
+    marker.on('dragstart',function(){dragging=true;interaction(true);marker.getElement().classList.add('lifting');});
     marker.on('drag',function(){s.setLatLng(marker.getLatLng());});
-    marker.on('dragend',function(){dragging=false;marker.getElement().classList.remove('lifting');var p=marker.getLatLng();send({type:'pick',point:[p.lat,p.lng]});});
+    marker.on('dragend',function(){dragging=false;interaction(false);marker.getElement().classList.remove('lifting');var p=marker.getLatLng();send({type:'pick',point:[p.lat,p.lng]});});
   }
   map.on('click',function(e){if(state.mode!=='explore'&&!state.disabled)send({type:'pick',point:[e.latlng.lat,e.latlng.lng]});});
   map.on('moveend zoomend',function(){drawPins();if(!state.point&&!state.section)drawSelection();var p=map.getCenter();send({type:'center',point:[p.lat,p.lng]});});
@@ -80,7 +98,7 @@ const runtime = String.raw`
     try {if(typeof msg==='string')msg=JSON.parse(msg);}catch(e){return;}
     if(!msg || msg.source!=='surios-app' || msg.type!=='state')return;
     clearInterval(readyTimer); state=msg.state;
-    if(state.disabled){map.dragging.disable();map.touchZoom.disable();map.doubleClickZoom.disable();}else{map.dragging.enable();map.touchZoom.enable();map.doubleClickZoom.enable();}
+    if(state.disabled){pointers.clear();interaction(false);map.dragging.disable();map.touchZoom.disable();map.doubleClickZoom.disable();}else{map.dragging.enable();map.touchZoom.enable();map.doubleClickZoom.enable();}
     if(state.focus && state.focus.key!==focusKey){focusKey=state.focus.key;if(state.focus.bounds && state.focus.bounds.length){map.fitBounds(state.focus.bounds,{padding:[48,80],maxZoom:18,animate:false});}else if(state.focus.point){map.setView(state.focus.point,state.focus.zoom||17,{animate:false});}}
     drawPins();drawSelection();
   }
@@ -89,4 +107,11 @@ const runtime = String.raw`
   var readyTimer=setInterval(function(){send({type:'ready'});},250);send({type:'ready'});
 })();`;
 
-export const mapDocument = `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src https://tile.openstreetmap.org data:;"><style>${leaflet.css}\nhtml,body,#map{height:100%;width:100%;margin:0;background:#F2F1ED;font-family:system-ui} .leaflet-control-zoom{border:1px solid #DEDEE3!important;border-radius:12px!important;overflow:hidden;box-shadow:none!important}.leaflet-control-zoom a{width:48px!important;height:48px!important;line-height:48px!important;color:#18181B!important;background:white!important}.leaflet-control-attribution{font-size:10px!important}.pin-root{background:none;border:0}.hazard-pin{display:flex;position:relative;align-items:center;justify-content:center;width:32px;height:32px;border:2px solid white;border-radius:10px 10px 10px 2px;color:white;font:700 13px system-ui;box-shadow:0 2px 4px #0003}.hazard-pin small{position:absolute;top:-8px;right:-9px;min-width:18px;height:18px;border:1px solid white;border-radius:12px;background:#18181B;display:grid;place-items:center;font:600 10px system-ui}.location-pin{display:block;position:relative;margin:4px 6px;width:24px;height:24px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#C93D00;border:3px solid white;box-shadow:0 1px 4px #0003}.location-pin:after{content:'';position:absolute;left:7px;top:7px;width:10px;height:10px;background:white;border-radius:50%}.road-end{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:#C93D00;color:white;border:3px solid white;font:700 14px system-ui}.drop-shadow{border-radius:50%;background:#0005;box-shadow:0 0 0 2px #C93D00;pointer-events:none}.hopping{animation:hop 1.3s ease-in-out infinite}.lifting .location-pin{translate:0 -10px}@keyframes hop{0%,60%,100%{translate:0 0}30%{translate:0 -7px}}@media(prefers-reduced-motion:reduce){.hopping{animation:none}} .leaflet-control-attribution{cursor:pointer} </style></head><body><div id="map" role="region" aria-label="OpenStreetMap street map"></div><script>${leaflet.js.replaceAll("</script", "<\\/script")}</script><script>${runtime}</script></body></html>`;
+const touchStyles = `
+html,body,#map{overflow:hidden;touch-action:none;overscroll-behavior:contain;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.pin-root.drag-target .location-pin{position:absolute;left:9px;top:8px;margin:0}
+.pin-root.drag-target .road-end{position:absolute;left:6px;top:6px}
+.pin-root.lifting .location-pin{animation:none;translate:0 -10px}
+`;
+
+export const mapDocument = `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src https://tile.openstreetmap.org data:;"><style>${leaflet.css}\n${touchStyles}\nhtml,body,#map{height:100%;width:100%;margin:0;background:#F2F1ED;font-family:system-ui} .leaflet-control-zoom{border:1px solid #DEDEE3!important;border-radius:12px!important;overflow:hidden;box-shadow:none!important}.leaflet-control-zoom a{width:48px!important;height:48px!important;line-height:48px!important;color:#18181B!important;background:white!important}.leaflet-control-attribution{font-size:10px!important}.pin-root{background:none;border:0}.hazard-pin{display:flex;position:relative;align-items:center;justify-content:center;width:32px;height:32px;border:2px solid white;border-radius:10px 10px 10px 2px;color:white;font:700 13px system-ui;box-shadow:0 2px 4px #0003}.hazard-pin small{position:absolute;top:-8px;right:-9px;min-width:18px;height:18px;border:1px solid white;border-radius:12px;background:#18181B;display:grid;place-items:center;font:600 10px system-ui}.location-pin{display:block;position:relative;margin:4px 6px;width:24px;height:24px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#C93D00;border:3px solid white;box-shadow:0 1px 4px #0003}.location-pin:after{content:'';position:absolute;left:7px;top:7px;width:10px;height:10px;background:white;border-radius:50%}.road-end{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:#C93D00;color:white;border:3px solid white;font:700 14px system-ui}.drop-shadow{border-radius:50%;background:#0005;box-shadow:0 0 0 2px #C93D00;pointer-events:none}.hopping{animation:hop 1.3s ease-in-out infinite}.lifting .location-pin{translate:0 -10px}@keyframes hop{0%,60%,100%{translate:0 0}30%{translate:0 -7px}}@media(prefers-reduced-motion:reduce){.hopping{animation:none}} .leaflet-control-attribution{cursor:pointer} </style></head><body><div id="map" role="region" aria-label="OpenStreetMap street map"></div><script>${leaflet.js.replaceAll("</script", "<\\/script")}</script><script>${runtime}</script></body></html>`;

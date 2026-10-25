@@ -3,9 +3,10 @@ import { randomUUID } from "expo-crypto";
 import { File as NativeFile } from "expo-file-system";
 import { Platform } from "react-native";
 import { ApiError } from "../lib/api-client";
+import { appendUpload } from "../lib/upload-file";
 import type { Attachment } from "./contracts";
 
-export async function chooseEvidence(camera: boolean): Promise<Attachment[]> {
+export async function chooseEvidence(camera: boolean, kind: "all" | "photo" | "video" = "all"): Promise<Attachment[]> {
   if (camera && Platform.OS !== "web") {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted)
@@ -14,7 +15,7 @@ export async function chooseEvidence(camera: boolean): Promise<Attachment[]> {
       );
   }
   const options: ImagePicker.ImagePickerOptions = {
-    mediaTypes: camera ? ["images"] : ["images", "videos"],
+    mediaTypes: camera || kind === "photo" ? ["images"] : kind === "video" ? ["videos"] : ["images", "videos"],
     quality: 0.85,
     allowsMultipleSelection: !camera,
     selectionLimit: 6,
@@ -49,20 +50,7 @@ export function assessmentForm(
 ) {
   const form = new FormData();
   for (const file of files) {
-    if (Platform.OS === "web") {
-      if (!file.file)
-        throw new ApiError(
-          "The selected file is no longer available. Choose it again.",
-        );
-      form.append("media", file.file, file.name);
-    } else {
-      // React Native's multipart transport reads file URIs directly; no base64 copy.
-      form.append("media", {
-        uri: file.uri,
-        name: file.name,
-        type: file.mimeType,
-      } as unknown as Blob);
-    }
+    appendUpload(form, "media", file);
   }
   form.append("headline", title);
   form.append("caption", body);
