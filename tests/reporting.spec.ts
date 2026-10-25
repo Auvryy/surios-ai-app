@@ -784,9 +784,21 @@ test("cancelling an in-flight assessment discards it and a late response never e
 test("road pin can be dragged with a landing shadow and resolves a mapped road only after dropping", async ({
   page,
 }) => {
+  // A hopping visual is covered separately; keep the pointer target still here.
+  await page.emulateMedia({ reducedMotion: "reduce" });
   let lookups = 0;
-  await setup(page, async (_route, path) => {
-    if (path === "/api/roads") lookups++;
+  await setup(page, async (route, path) => {
+    if (path === "/api/roads") {
+      lookups++;
+      const query = new URL(route.request().url()).searchParams;
+      const lat = Number(query.get("lat")), lng = Number(query.get("lng"));
+      expect(Number.isFinite(lat) && Math.abs(lat) <= 90).toBe(true);
+      expect(Number.isFinite(lng) && Math.abs(lng) <= 180).toBe(true);
+      // Resizing the sheet can change the viewport center. Return a nearby
+      // fixture road for the actual drop, as the real lookup endpoint does.
+      await json(route, { roads: [{ ...road, coordinates: [[lat - 0.003, lng], [lat + 0.003, lng]] }] });
+      return true;
+    }
     return false;
   });
   await composer(page);
@@ -798,12 +810,14 @@ test("road pin can be dragged with a landing shadow and resolves a mapped road o
   expect(box).not.toBeNull();
   await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
   await page.mouse.down();
-  await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2 + 4, {
+  await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2 + 12, {
     steps: 6,
   });
+  await expect(frame.locator(".lifting")).toBeAttached();
   await expect(frame.locator(".drop-shadow")).toBeVisible();
   expect(lookups).toBe(0);
   await page.mouse.up();
+  await expect.poll(() => lookups).toBe(1);
   await expect(
     page.getByText("Demo mapped road · 80 m", { exact: true }),
   ).toBeVisible();
