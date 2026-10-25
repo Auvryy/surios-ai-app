@@ -23,6 +23,8 @@ export default defineConfig({
         "reporting-live.spec.ts",
         "profile.spec.ts",
         "profile-live.spec.ts",
+        "settings.spec.ts",
+        "settings-live.spec.ts",
       ],
       use: {
         browserName: "chromium",
@@ -31,7 +33,8 @@ export default defineConfig({
         ignoreHTTPSErrors:
           process.env.SURIOS_TEST_REPORTING_LIVE === "1" ||
           process.env.SURIOS_TEST_LIVE === "1" ||
-          process.env.SURIOS_TEST_PROFILE_LIVE === "1",
+          process.env.SURIOS_TEST_PROFILE_LIVE === "1" ||
+          process.env.SURIOS_TEST_SETTINGS_LIVE === "1",
         trace: "off",
       },
     },

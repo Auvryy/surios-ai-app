@@ -1,4 +1,5 @@
 import Feather from "@expo/vector-icons/Feather";
+import { useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, Image, Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import type { SessionUser } from "@/auth/contracts";
@@ -22,6 +23,7 @@ export function ProfileScreen({ user, onBack, onCreate, onMap, onChanged }: {
   onChanged: () => void;
 }) {
   const { colors } = useTheme();
+  const router = useRouter();
   const { request, retry: refreshSession, signOut, busy, notice } = useSession();
   const [data, setData] = useState<ProfilePage | null>(null);
   const [loading, setLoading] = useState(true);
@@ -121,7 +123,7 @@ export function ProfileScreen({ user, onBack, onCreate, onMap, onChanged }: {
         renderItem={({ item }) => <PostCard item={item} onMap={onMap} />}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListHeaderComponent={<View style={styles.header}>
-          <View style={styles.toolbar}>{back}<IconButton label="Sign out" icon="log-out" disabled={locked} onPress={() => void signOut()} /></View>
+          <View style={styles.toolbar}>{back}<View style={styles.toolbarActions}><IconButton label="Settings" icon="settings" disabled={locked} onPress={() => router.push("/settings")} /><IconButton label="Sign out" icon="log-out" disabled={locked} onPress={() => void signOut()} /></View></View>
           <View style={[styles.identity, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={[styles.cover, { backgroundColor: colors.accent }]}>
               {profile.coverUrl && <Image source={{ uri: profile.coverUrl }} accessibilityLabel={`${profile.name}'s cover photo`} resizeMode="cover" style={StyleSheet.absoluteFill} />}
@@ -197,6 +199,7 @@ const styles = StyleSheet.create({
   list: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 28 },
   header: { gap: 16, paddingBottom: 16 },
   toolbar: { minHeight: 48, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
+  toolbarActions: { flexDirection: "row", alignItems: "center", gap: 8 },
   back: { minHeight: 48, paddingHorizontal: 4, flexDirection: "row", alignItems: "center", gap: 8 },
   identity: { borderWidth: 1, borderRadius: 12, overflow: "hidden" },
   cover: { aspectRatio: 3, width: "100%", position: "relative" },
