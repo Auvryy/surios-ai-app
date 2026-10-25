@@ -1,122 +1,463 @@
-import Feather from '@expo/vector-icons/Feather';
-import { useState } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '@/constants/theme';
+import Feather from "@expo/vector-icons/Feather";
+import { randomUUID } from "expo-crypto";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { useSession } from "@/auth/session-provider";
+import { useTheme } from "@/constants/theme";
+import {
+  Button,
+  Chip,
+  Field,
+  IconButton,
+  Notice,
+  Sheet,
+  ui,
+} from "@/components/ui/controls";
+import { LocationPicker } from "@/components/map/location-picker";
+import { AssessmentDetails } from "@/components/map/assessment-details";
+import type { Coordinate } from "@/lib/roads";
+import type { PublishedReport } from "@/lib/report-contracts";
+import { ReportController } from "@/reporting/report-controller";
+import { assessmentForm, chooseEvidence } from "@/reporting/media";
+import {
+  EvidencePreview,
+  VideoPreview,
+  type PreviewMedia,
+} from "./evidence-preview";
 
-type Props = { visible: boolean; onClose: () => void };
-
-export function ReportComposer({ visible, onClose }: Props) {
-  const { colors } = useTheme();
-  const [description, setDescription] = useState('');
-  const [notice, setNotice] = useState('This preview stays on your device. Nothing is uploaded or published.');
-
-  const explainUnavailable = (feature: 'photos' | 'location') => {
-    setNotice(feature === 'photos'
-      ? 'Photo capture and uploads will be connected in the reporting phase. No image was selected.'
-      : 'Location selection will be connected in the reporting phase. No location was recorded.');
+type Props = {
+  onClose: () => void;
+  onPublished: (report: PublishedReport) => void;
+  initialPoint?: Coordinate;
+};
+export function ReportComposer({ onClose, onPublished, initialPoint }: Props) {
+  const { colors } = useTheme(),
+    { request, session } = useSession();
+  const [controller] = useState(() => {
+    const result = new ReportController(request, randomUUID, assessmentForm);
+    if (initialPoint)
+      result.setLocation({
+        mode: "point",
+        point: initialPoint,
+        road: null,
+        name: "",
+      });
+    return result;
+  });
+  const state = useSyncExternalStore(
+    controller.subscribe,
+    controller.getSnapshot,
+    controller.getSnapshot,
+  );
+  const [picking, setPicking] = useState(false),
+    [discard, setDiscard] = useState(false),
+    [preview, setPreview] = useState<PreviewMedia[] | null>(null);
+  const alive = useRef(true),
+    selecting = useRef(false);
+  useEffect(() => {
+    alive.current = true;
+    controller.activate();
+    return () => {
+      alive.current = false;
+      controller.dispose();
+    };
+  }, [controller]);
+  const publishing = state.busy === "publishing",
+    locked = publishing || picking;
+  const select = async (camera: boolean) => {
+    if (locked || selecting.current) return;
+    selecting.current = true;
+    setPicking(true);
+    controller.showError("");
+    try {
+      const files = await chooseEvidence(camera);
+      if (alive.current) controller.add(files);
+    } catch (error) {
+      if (alive.current)
+        controller.showError(
+          error instanceof Error
+            ? error.message
+            : "Could not open the picker. Try again.",
+        );
+    } finally {
+      selecting.current = false;
+      if (alive.current) setPicking(false);
+    }
   };
-
+  const close = () => {
+    if (locked) return;
+    if (state.attachments.length || state.title || state.body) setDiscard(true);
+    else onClose();
+  };
+  const publish = async () => {
+    const result = await controller.publish();
+    if (result && alive.current) onPublished(result);
+  };
+  const cover = state.attachments.find((f) => f.id === state.cover);
+  const allPreview = state.attachments.map((f) => ({
+    id: f.id,
+    uri: f.uri,
+    kind: f.mimeType.startsWith("video/")
+      ? ("video" as const)
+      : ("photo" as const),
+    name: f.name,
+  }));
   return (
-    <Modal visible={visible} transparent animationType="slide" statusBarTranslucent onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        <KeyboardAvoidingView style={styles.keyboard} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <SafeAreaView edges={['bottom']} style={[styles.sheet, { backgroundColor: colors.surface }]}>
-            <View style={[styles.handle, { backgroundColor: colors.border }]} />
-            <View style={styles.header}>
-              <View style={styles.headerCopy}>
-                <Text style={[styles.eyebrow, { color: colors.primary }]}>COMMUNITY REPORT</Text>
-                <Text accessibilityRole="header" style={[styles.title, { color: colors.text }]}>Start a post</Text>
+    <>
+      <Sheet
+        title="Start a post"
+        subtitle="Public infrastructure update"
+        onClose={close}
+        closeDisabled={locked}
+        footer={
+          <>
+            {state.busy === "assessing" ? (
+              <Button
+                label="Cancel assessment"
+                onPress={() => controller.cancelAssessment()}
+                icon="x"
+              />
+            ) : (
+              <Button
+                label={publishing ? "Publishing…" : "Publish report"}
+                variant="primary"
+                icon="arrow-up-right"
+                busy={publishing}
+                disabled={
+                  locked ||
+                  !state.assessment ||
+                  !state.location.point ||
+                  (state.location.mode === "road" && !state.location.road) ||
+                  state.location.name.trim().length < 3 ||
+                  state.title.trim().length < 3
+                }
+                onPress={() => void publish()}
+              />
+            )}
+            {state.errorScope === "publish" && !!state.error && (
+              <Notice error>{state.error}</Notice>
+            )}
+            <Text style={[ui.caption, { color: colors.muted }]}>
+              Evidence and location will be public after publishing.
+            </Text>
+          </>
+        }
+      >
+        <View style={ui.row}>
+          <View style={[styles.avatar, { backgroundColor: colors.accent }]}>
+            <Feather name="user" size={19} color={colors.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[ui.label, { color: colors.text }]}>
+              {session?.user.name}
+            </Text>
+            <Text style={[ui.caption, { color: colors.muted }]}>
+              Roads, bridges, drainage, utilities & telecom
+            </Text>
+          </View>
+        </View>
+        <Field
+          label="Headline"
+          placeholder="What needs attention?"
+          maxLength={120}
+          value={state.title}
+          onChangeText={(v) => controller.edit("title", v)}
+          editable={!locked}
+        />
+        <Field
+          label="What happened?"
+          placeholder="Describe what you can see and a nearby landmark…"
+          maxLength={2000}
+          multiline
+          value={state.body}
+          onChangeText={(v) => controller.edit("body", v)}
+          editable={!locked}
+        />
+        <View style={ui.gap}>
+          <View style={[ui.row, { justifyContent: "space-between" }]}>
+            <Text style={[ui.heading, { color: colors.text }]}>
+              Photos & videos
+            </Text>
+            <Chip>{state.attachments.length}/6</Chip>
+          </View>
+          {cover ? (
+            <View style={styles.cover}>
+              {cover.mimeType.startsWith("video/") ? (
+                <VideoPreview key={cover.id} uri={cover.uri} />
+              ) : (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Preview selected evidence"
+                  onPress={() => setPreview(allPreview)}
+                >
+                  <Image
+                    source={{ uri: cover.uri }}
+                    resizeMode="cover"
+                    accessibilityLabel="Selected post cover"
+                    style={styles.coverImage}
+                  />
+                </Pressable>
+              )}
+              <View
+                style={[styles.coverLabel, { backgroundColor: colors.surface }]}
+              >
+                <Text
+                  style={[
+                    ui.caption,
+                    { color: colors.text, fontWeight: "600" },
+                  ]}
+                >
+                  Post cover
+                </Text>
               </View>
-              <Pressable accessibilityRole="button" accessibilityLabel="Close report composer" onPress={onClose} hitSlop={8} style={[styles.closeButton, { backgroundColor: colors.background }]}>
-                <Feather name="x" size={20} color={colors.text} />
-              </Pressable>
             </View>
-
-            <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.body}>
-              <Text style={[styles.intro, { color: colors.muted }]}>Describe a public infrastructure concern. You can add photos and a map pin when reporting tools are connected.</Text>
-
-              <View style={styles.fieldGroup}>
-                <View style={styles.fieldLabelRow}>
-                  <Text style={[styles.fieldLabel, { color: colors.text }]}>What needs attention?</Text>
-                  <Text style={[styles.counter, { color: colors.muted }]}>{description.length}/600</Text>
-                </View>
-                <TextInput
-                  accessibilityLabel="Report description"
-                  accessibilityHint="Describe what you can see. Do not include private or sensitive information."
-                  value={description}
-                  onChangeText={setDescription}
-                  maxLength={600}
-                  multiline
-                  placeholder="Share what you noticed and where it is."
-                  placeholderTextColor={colors.muted}
-                  selectionColor={colors.primary}
-                  textAlignVertical="top"
-                  style={[styles.input, { color: colors.text, backgroundColor: colors.background, borderColor: colors.border }]}
-                />
+          ) : (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Upload report evidence"
+              disabled={locked}
+              onPress={() => void select(false)}
+              style={({ pressed }) => [
+                styles.upload,
+                {
+                  borderColor: colors.border,
+                  backgroundColor: colors.background,
+                  opacity: pressed ? 0.7 : 1,
+                },
+              ]}
+            >
+              <Feather name="camera" size={30} color={colors.primary} />
+              <Text style={[ui.label, { color: colors.text }]}>
+                Add a photo or video
+              </Text>
+              <Text style={[ui.caption, { color: colors.muted }]}>
+                Show the issue clearly.
+              </Text>
+            </Pressable>
+          )}
+          {!!state.attachments.length && (
+            <>
+              <Text style={[ui.caption, { color: colors.muted }]}>
+                Tap a thumbnail to choose the cover.
+              </Text>
+              <View style={styles.thumbnails}>
+                {state.attachments.map((file, index) => (
+                  <View key={file.id} style={styles.thumbnailSlot}>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Use attachment ${index + 1} as cover`}
+                      accessibilityState={{
+                        selected: state.cover === file.id,
+                        disabled: locked || !!state.busy,
+                      }}
+                      disabled={locked || !!state.busy}
+                      onPress={() => controller.setCover(file.id)}
+                      style={[
+                        styles.thumbnail,
+                        {
+                          borderColor:
+                            state.cover === file.id
+                              ? colors.primary
+                              : colors.border,
+                          backgroundColor: colors.background,
+                        },
+                      ]}
+                    >
+                      {file.mimeType.startsWith("video/") ? (
+                        <Feather
+                          name="video"
+                          size={25}
+                          color={colors.primary}
+                        />
+                      ) : (
+                        <Image
+                          source={{ uri: file.uri }}
+                          resizeMode="cover"
+                          style={StyleSheet.absoluteFill}
+                        />
+                      )}
+                      {state.cover === file.id && (
+                        <View
+                          style={[
+                            styles.selected,
+                            { backgroundColor: colors.primary },
+                          ]}
+                        >
+                          <Feather
+                            name="check"
+                            size={14}
+                            color={colors.onPrimary}
+                          />
+                        </View>
+                      )}
+                    </Pressable>
+                    <IconButton
+                      label={`Remove attachment ${index + 1}`}
+                      icon="x"
+                      disabled={locked}
+                      onPress={() => controller.remove(file.id)}
+                    />
+                  </View>
+                ))}
               </View>
-
-              <View style={styles.actions}>
-                <ActionButton icon="camera" label="Add photos" helper="Photo upload not connected" onPress={() => explainUnavailable('photos')} />
-                <ActionButton icon="map-pin" label="Add location" helper="Map selection not connected" onPress={() => explainUnavailable('location')} />
-              </View>
-
-              <View accessibilityRole="alert" style={[styles.notice, { backgroundColor: colors.accent, borderColor: colors.border }]}>
-                <Feather name="info" size={17} color={colors.primary} />
-                <Text style={[styles.noticeText, { color: colors.text }]}>{notice}</Text>
-              </View>
-            </ScrollView>
-
-            <View style={[styles.footer, { borderTopColor: colors.border }]}>
-              <Text style={[styles.footerHint, { color: colors.muted }]}>Publishing is not connected yet.</Text>
-              <Pressable accessibilityRole="button" accessibilityState={{ disabled: true }} disabled style={[styles.publishButton, { backgroundColor: colors.border }]}>
-                <Text style={[styles.publishText, { color: colors.muted }]}>Publish report</Text>
-              </Pressable>
+            </>
+          )}
+          <View style={ui.row}>
+            <Button
+              label="Add photos or videos"
+              icon="image"
+              disabled={locked || state.attachments.length >= 6}
+              busy={picking}
+              onPress={() => void select(false)}
+            />
+            <Button
+              label="Open camera"
+              icon="camera"
+              disabled={locked || state.attachments.length >= 6}
+              onPress={() => void select(true)}
+            />
+          </View>
+          <Text style={[ui.caption, { color: colors.muted }]}>
+            Up to 6 files · 5 MB/photo · 25 MB/video · 50 MB total
+          </Text>
+          {state.errorScope === "media" && !!state.error && (
+            <Notice error>{state.error}</Notice>
+          )}
+        </View>
+        <View style={[ui.card, { borderColor: colors.border }]}>
+          <View style={ui.row}>
+            <Feather name="zap" size={18} color={colors.primary} />
+            <Text style={[ui.heading, { color: colors.text }]}>
+              AI assessment
+            </Text>
+          </View>
+          {state.assessment ? (
+            <AssessmentDetails analysis={state.assessment.analysis} />
+          ) : (
+            <Text style={[ui.body, { color: colors.muted }]}>
+              AI checks your evidence with the headline and caption as context.
+              You can review its findings before publishing.
+            </Text>
+          )}
+          {state.busy === "assessing" && (
+            <View style={ui.row}>
+              <ActivityIndicator color={colors.primary} />
+              <Text
+                accessibilityLiveRegion="polite"
+                style={[ui.body, { color: colors.text }]}
+              >
+                Uploading and assessing evidence…
+              </Text>
             </View>
-          </SafeAreaView>
-        </KeyboardAvoidingView>
-      </View>
-    </Modal>
+          )}
+          <Button
+            label={state.assessment ? "Assess again" : "Assess evidence"}
+            icon="zap"
+            onPress={() => void controller.assess()}
+            disabled={locked || !!state.busy || !state.attachments.length}
+          />
+          {!!state.note && (
+            <Text style={[ui.caption, { color: colors.muted }]}>
+              {state.note}
+            </Text>
+          )}
+          {state.rejection && <AssessmentDetails analysis={state.rejection} />}
+          {state.errorScope === "assessment" && !!state.error && (
+            <Notice error>{state.error}</Notice>
+          )}
+        </View>
+        <View style={ui.gap}>
+          <Text style={[ui.heading, { color: colors.text }]}>
+            Where is the issue?
+          </Text>
+          <Field
+            label="Location or landmark"
+            value={state.location.name}
+            maxLength={200}
+            placeholder="Street, barangay, or nearby landmark"
+            onChangeText={(name) =>
+              controller.setLocation({ ...state.location, name })
+            }
+            editable={!locked}
+          />
+          <LocationPicker
+            value={state.location}
+            onChange={(v) => controller.setLocation(v)}
+            disabled={locked}
+          />
+        </View>
+      </Sheet>
+      {discard && (
+        <Sheet title="Discard this post?" onClose={() => setDiscard(false)}>
+          <Text style={[ui.body, { color: colors.text }]}>
+            Your unpublished text, location and evidence will be removed from
+            this composer.
+          </Text>
+          <Button
+            label="Keep editing"
+            variant="primary"
+            onPress={() => setDiscard(false)}
+          />
+          <Button label="Discard post" variant="danger" onPress={onClose} />
+        </Sheet>
+      )}
+      {preview && (
+        <EvidencePreview media={preview} onClose={() => setPreview(null)} />
+      )}
+    </>
   );
 }
-
-function ActionButton({ icon, label, helper, onPress }: { icon: 'camera' | 'map-pin'; label: string; helper: string; onPress: () => void }) {
-  const { colors } = useTheme();
-  return (
-    <Pressable accessibilityRole="button" accessibilityLabel={`${label}. ${helper}`} onPress={onPress} style={({ pressed }) => [styles.action, { borderColor: colors.border, backgroundColor: pressed ? colors.accent : colors.surface }]}>
-      <View style={[styles.actionIcon, { backgroundColor: colors.accent }]}><Feather name={icon} size={18} color={colors.primary} /></View>
-      <Text style={[styles.actionLabel, { color: colors.text }]}>{label}</Text>
-      <Text numberOfLines={2} style={[styles.actionHelper, { color: colors.muted }]}>{helper}</Text>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(24, 24, 27, 0.42)' },
-  keyboard: { flex: 1, width: '100%', alignItems: 'center', justifyContent: 'flex-end' },
-  sheet: { width: '100%', maxWidth: 520, maxHeight: '94%', borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: 'hidden' },
-  handle: { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginTop: 10 },
-  header: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  headerCopy: { gap: 3 },
-  eyebrow: { fontSize: 11, lineHeight: 16, fontWeight: '700', letterSpacing: 1.1 },
-  title: { fontSize: 23, lineHeight: 30, fontWeight: '700', letterSpacing: -0.35 },
-  closeButton: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  body: { paddingHorizontal: 20, paddingBottom: 18, gap: 18 },
-  intro: { fontSize: 15, lineHeight: 22 },
-  fieldGroup: { gap: 8 },
-  fieldLabelRow: { minHeight: 23, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  fieldLabel: { fontSize: 15, lineHeight: 22, fontWeight: '600' },
-  counter: { fontSize: 12, lineHeight: 18 },
-  input: { minHeight: 126, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingTop: 12, paddingBottom: 12, fontSize: 16, lineHeight: 23 },
-  actions: { flexDirection: 'row', gap: 10 },
-  action: { flex: 1, minHeight: 112, borderWidth: 1, borderRadius: 14, padding: 12, alignItems: 'flex-start', justifyContent: 'center', gap: 4 },
-  actionIcon: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginBottom: 2 },
-  actionLabel: { fontSize: 14, lineHeight: 19, fontWeight: '600' },
-  actionHelper: { width: '100%', fontSize: 12, lineHeight: 16 },
-  notice: { minHeight: 54, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, flexDirection: 'row', alignItems: 'flex-start', gap: 9 },
-  noticeText: { flex: 1, fontSize: 13, lineHeight: 19 },
-  footer: { borderTopWidth: 1, paddingHorizontal: 20, paddingVertical: 14, gap: 8 },
-  footerHint: { fontSize: 13, lineHeight: 18, textAlign: 'center' },
-  publishButton: { minHeight: 50, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  publishText: { fontSize: 15, fontWeight: '700' },
+  avatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  upload: {
+    minHeight: 150,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    padding: 14,
+  },
+  cover: { borderRadius: 14, overflow: "hidden" },
+  coverImage: { width: "100%", aspectRatio: 4 / 3 },
+  coverLabel: {
+    position: "absolute",
+    left: 10,
+    top: 10,
+    borderRadius: 15,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  thumbnails: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  thumbnailSlot: { width: "30%", alignItems: "center", gap: 4 },
+  thumbnail: {
+    width: "100%",
+    aspectRatio: 1,
+    borderWidth: 2,
+    borderRadius: 10,
+    overflow: "hidden",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  selected: {
+    position: "absolute",
+    bottom: 5,
+    right: 5,
+    borderRadius: 10,
+    padding: 3,
+  },
 });

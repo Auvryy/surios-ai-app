@@ -10,11 +10,11 @@ Implemented: citizen signup, shared-account sign-in, bearer sessions, native Sec
 
 ## Phase 2 — citizen field reporting
 
-Add photo capture/gallery, GPS/manual location, street map and supported road selection. Connect existing assessment drafts and publishing. Acceptance: permission denial is recoverable; AI results come from the backend; publishing persists a real post visible on the website; draft ownership and media limits are enforced.
+Implemented: camera/library photo/video selection, cover selection, foreground GPS/manual pins, OpenStreetMap hazard map, actual road sections and endpoints, source/evidence/resolution links, server assessment drafts and publishing. Browser tests cover denial recovery, stale/cancelled drafts, file limits, covers, duplicate submission and map interaction. A disposable real backend verifies saved posts/media and mapped-section publication. Remaining environment acceptance: native camera/GPS/WebView/playback and upload recovery on a physical device. See [REPORTING.md](REPORTING.md).
 
 ## Phase 3 — follow-up and interactions
 
-Add official-update detail links, grouped-hazard status, reactions, comments, repost/share and profiles. Acceptance: linked posts show the same official resolution, unrelated hazards remain independent and interactions persist across devices.
+Official-update links and canonical grouped-hazard status are available through feed/map data. Add in-app reactions, comments, repost/share and profile editing. Acceptance: linked posts show the same official resolution, unrelated hazards remain independent and interactions persist across devices.
 
 ## Phase 4 — dedicated builds and release validation
 

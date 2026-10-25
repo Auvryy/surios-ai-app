@@ -30,7 +30,22 @@
         }
       ],
       "expo-font",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-video",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choose evidence for your public infrastructure report.",
+          "cameraPermission": "Take a photo of the infrastructure issue you are reporting.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Use your location to place a report pin. You can also select it manually."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
