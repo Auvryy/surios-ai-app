@@ -1,5 +1,6 @@
 import Feather from "@expo/vector-icons/Feather";
 import { useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BrandMark } from "@/components/auth/brand-mark";
@@ -20,6 +21,8 @@ import { NotificationInbox } from "@/components/notifications/notification-inbox
 import { useNotifications } from "@/components/notifications/notification-provider";
 import { unreadLabel } from "@/lib/notifications";
 import { ProfileScreen } from "@/components/profile/profile-screen";
+import { PublicProfileScreen } from "@/components/profile/public-profile-screen";
+import { defaultFeedQuery, feedRequest, normalizeFeedQuery, type FeedQuery } from "@/lib/feed-filters";
 
 const infrastructureTypes = [
   "Roads",
@@ -32,11 +35,20 @@ const infrastructureTypes = [
 
 export default function CitizenScreen({ initialSection = "feed" }: { initialSection?: CitizenSection }) {
   const { colors } = useTheme();
+  const router = useRouter();
+  const params = useLocalSearchParams<{ profile?: string | string[] }>();
+  const viewedProfileId = typeof params.profile === "string" ? params.profile.toLowerCase() : "";
+  const viewingContributor = params.profile !== undefined;
   const { unreadCount } = useNotifications();
   const [section, setSection] = useState<CitizenSection>(initialSection);
   const [composerOpen, setComposerOpen] = useState(false);
   const [initialPoint, setInitialPoint] = useState<Coordinate | undefined>();
   const [feedVersion, setFeedVersion] = useState(0);
+  const [feedQuery, setFeedQuery] = useState<FeedQuery>(defaultFeedQuery);
+  const changeQuery = (input: FeedQuery) => {
+    const next = normalizeFeedQuery(input);
+    setFeedQuery((previous) => feedRequest(previous) === feedRequest(next) ? previous : next);
+  };
   const [published, setPublished] = useState<PublishedReport | null>(null);
   const [mapReportId, setMapReportId] = useState<string | undefined>();
   const create = (point?: Coordinate) => {
@@ -51,6 +63,8 @@ export default function CitizenScreen({ initialSection = "feed" }: { initialSect
     setPublished(result);
     setComposerOpen(false);
     setFeedVersion((v) => v + 1);
+    setFeedQuery(defaultFeedQuery);
+    if (viewingContributor) router.setParams({ profile: undefined });
     setSection("feed");
   };
   const { session, status } = useSession();
@@ -83,7 +97,6 @@ export default function CitizenScreen({ initialSection = "feed" }: { initialSect
           />
         </View>
       )}
-      {section === "feed" && <FeedSection onCreate={() => create()} />}
     </View>
   );
 
@@ -93,8 +106,12 @@ export default function CitizenScreen({ initialSection = "feed" }: { initialSect
       style={[styles.safe, { backgroundColor: colors.background }]}
     >
       <View style={[styles.shell, { backgroundColor: colors.background }]}>
-        {section === "feed" ? (
-          <CommunityFeed key={feedVersion} header={header} onMap={openMap} />
+        {section === "feed" ? viewingContributor ? (
+          <PublicProfileScreen key={viewedProfileId} id={viewedProfileId} header={header} onMap={openMap}
+            onBack={() => { if (router.canGoBack()) router.back(); else router.setParams({ profile: undefined }); }}
+            onOwnProfile={() => { router.setParams({ profile: undefined }); setSection("profile"); }} />
+        ) : (
+          <CommunityFeed key={feedVersion} header={header} composer={<FeedSection onCreate={() => create()} />} onMap={openMap} query={feedQuery} onQueryChange={changeQuery} />
         ) : section === "profile" ? (
           <ProfileScreen user={session.user} onBack={() => setSection("feed")} onCreate={() => create()} onMap={openMap} onChanged={() => setFeedVersion((v) => v + 1)} />
         ) : section === "map" ? (
@@ -107,6 +124,7 @@ export default function CitizenScreen({ initialSection = "feed" }: { initialSect
           active={section}
           unreadCount={unreadCount}
           onChange={(next) => {
+            if (next === "feed" && viewingContributor) router.setParams({ profile: undefined });
             if (next === "map") setMapReportId(undefined);
             setSection(next);
           }}

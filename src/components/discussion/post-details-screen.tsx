@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  Pressable,
   StyleSheet,
   Text,
   View,
@@ -32,7 +33,8 @@ import {
   type Thread,
 } from "@/lib/discussion";
 import { publicUrl } from "@/lib/feed";
-import { profileImageUrl } from "@/lib/profile";
+import { contributorDestination, profileImageUrl } from "@/lib/profile";
+import { PostMenu } from "@/components/citizen/post-menu";
 import { AuthorLine, PostContent } from "./post-content";
 import { RepostComposer } from "./repost-composer";
 import { ShareSheet } from "./share-sheet";
@@ -341,6 +343,21 @@ export function PostDetailsScreen({
             {post && (
               <>
                 <View style={[ui.card, card]}>
+                  <View style={{ alignItems: "flex-end" }}><PostMenu
+                    target={{ id: quote?.id || post.id, kind: quote ? "repost" : "post", authorId: (quote?.author || post.author).id, official: !!quote?.governmentUpdate, deleted: !quote && post.deleted }}
+                    disabled={busy || loading}
+                    onBusyChange={(next) => { updating.current = next; if (next) { pending.current?.abort(); setLoading(false); } setBusy(next); }}
+                    onDeleted={() => {
+                      if (quote) {
+                        setData((current) => current ? { ...current, reposts: current.reposts.filter((item) => item.id !== quote.id) } : current);
+                        router.replace({ pathname: "/post/[id]", params: { id: post.id } });
+                      } else {
+                        // The DELETE receipt is authoritative even if the follow-up read fails.
+                        const retained = (item: Thread["post"]) => item.id === post.id ? { ...item, title: "Post deleted by author", body: "", media: [], deleted: true } : item;
+                        setData((current) => current ? { ...current, post: retained(current.post), reposts: current.reposts.map((item) => ({ ...item, post: retained(item.post) })) } : current);
+                        setMessage("Your post was deleted. Its linked hazard and official updates remain available."); void load();
+                      }
+                    }} /></View>
                   <PostContent
                     key={`${post.id}:${quote?.id || "post"}`}
                     post={post}
@@ -449,15 +466,17 @@ export function PostDetailsScreen({
           const item = row.value;
           return (
             <View style={[styles.comment, item.parentId && styles.reply, card]}>
-              <Avatar
+              <Pressable accessibilityRole="link" accessibilityLabel={`View profile of ${item.author.name}`}
+                onPress={() => router.push(contributorDestination(item.author.id))} style={{ minHeight: 48, minWidth: 48, justifyContent: "center" }}><Avatar
                 name={item.author.name}
                 uri={profileImageUrl(item.author.avatarUrl, apiOrigin())}
                 size={32}
-              />
+              /></Pressable>
               <View style={[styles.flex, ui.group]}>
-                <Text style={[ui.label, { color: colors.text }]}>
+                <Pressable accessibilityRole="link" accessibilityLabel={`View profile of ${item.author.name}`}
+                  onPress={() => router.push(contributorDestination(item.author.id))} style={{ minHeight: 48, justifyContent: "center" }}><Text style={[ui.label, { color: colors.text }]}>
                   {item.author.name}
-                </Text>
+                </Text></Pressable>
                 {item.parentId && (
                   <Text style={[ui.caption, { color: colors.muted }]}>
                     Replying to{" "}

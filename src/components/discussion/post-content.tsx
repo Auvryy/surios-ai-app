@@ -21,7 +21,7 @@ import { useTheme } from "@/constants/theme";
 import type { Author, DiscussionPost, Repost } from "@/lib/discussion";
 import { postDestination } from "@/lib/discussion";
 import { publicUrl } from "@/lib/feed";
-import { profileImageUrl } from "@/lib/profile";
+import { contributorDestination, profileImageUrl } from "@/lib/profile";
 import { humanize, statusLabel } from "@/lib/report-contracts";
 
 export function AuthorLine({
@@ -34,8 +34,11 @@ export function AuthorLine({
   label?: string;
 }) {
   const { colors } = useTheme();
+  const router = useRouter();
   return (
-    <View style={styles.author}>
+    <Pressable accessibilityRole="link" accessibilityLabel={`View profile of ${author.name}`}
+      onPress={() => router.push(contributorDestination(author.id))}
+      style={({ pressed }) => [styles.author, { minHeight: 48, opacity: pressed ? 0.7 : 1 }]}>
       <Avatar
         name={author.name}
         uri={profileImageUrl(author.avatarUrl, apiOrigin())}
@@ -54,7 +57,7 @@ export function AuthorLine({
           })}
         </Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 export function PostContent({

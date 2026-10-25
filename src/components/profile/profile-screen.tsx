@@ -120,7 +120,7 @@ export function ProfileScreen({ user, onBack, onCreate, onMap, onChanged }: {
         contentContainerStyle={styles.list} keyboardShouldPersistTaps="handled"
         refreshing={loading && !!data && !locked}
         onRefresh={() => { if (!locked && !editing) load(1); }}
-        renderItem={({ item }) => <PostCard item={item} onMap={onMap} />}
+        renderItem={({ item }) => <PostCard item={item} onMap={onMap} onDeleted={() => load(lastPage.current)} />}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListHeaderComponent={<View style={styles.header}>
           <View style={styles.toolbar}>{back}<View style={styles.toolbarActions}><IconButton label="Settings" icon="settings" disabled={locked} onPress={() => router.push("/settings")} /><IconButton label="Sign out" icon="log-out" disabled={locked} onPress={() => void signOut()} /></View></View>

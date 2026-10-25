@@ -28,20 +28,31 @@ import {
 } from "@/lib/feed";
 import { Button } from "@/components/ui/controls";
 import { Avatar } from "@/components/ui/avatar";
-import { profileImageUrl } from "@/lib/profile";
-import { postDestination } from "@/lib/discussion";
+import { contributorDestination, profileImageUrl } from "@/lib/profile";
+import { postDestination, validId } from "@/lib/discussion";
 import { EvidencePreview, type PreviewMedia } from "./evidence-preview";
+import { feedRequest, type FeedQuery } from "@/lib/feed-filters";
+import { FeedControls } from "./feed-controls";
+import { PostMenu } from "./post-menu";
 
 export function CommunityFeed({
   header,
+  composer,
   onMap,
+  query,
+  onQueryChange,
 }: {
   header: ReactNode;
+  composer?: ReactNode;
   onMap: (id?: string) => void;
+  query: FeedQuery;
+  onQueryChange: (query: FeedQuery) => void;
 }) {
   const { colors } = useTheme();
   const { request } = useSession();
-  const [data, setData] = useState<FeedPage | null>(null);
+  const [result, setResult] = useState<{ key: string; page: FeedPage } | null>(null);
+  const key = feedRequest(query);
+  const data = result?.key === key ? result.page : null;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const pending = useRef<AbortController | null>(null);
@@ -52,14 +63,16 @@ export function CommunityFeed({
       const controller = new AbortController();
       pending.current = controller;
       lastPage.current = page;
-      return request(`/api/community/posts?page=${page}`, {
+      setLoading(true);
+      setError(null);
+      return request(feedRequest(query, page), {
         signal: controller.signal,
       })
         .then((response) => {
           const result = parseFeedPage(response);
           // The API returns cumulative pages. Replace the collection rather than append duplicates.
           if (!controller.signal.aborted) {
-            setData(result);
+            setResult({ key, page: result });
             setError(null);
           }
         })
@@ -75,7 +88,7 @@ export function CommunityFeed({
           if (!controller.signal.aborted) setLoading(false);
         });
     },
-    [request],
+    [request, query, key],
   );
   useFocusEffect(useCallback(() => {
     void fetchPage(1);
@@ -92,8 +105,12 @@ export function CommunityFeed({
       data={data?.feed || []}
       keyExtractor={(item) => item.id}
       contentContainerStyle={styles.list}
-      ListHeaderComponent={<View style={styles.header}>{header}</View>}
-      renderItem={({ item }) => <PostCard item={item} onMap={onMap} />}
+      keyboardShouldPersistTaps="handled"
+      ListHeaderComponent={<View style={styles.header}>{header}
+        <FeedControls key={`${query.tab}:${query.q}`} query={query} onChange={onQueryChange} total={data?.total ?? null} loading={loading} />
+        {!query.q && query.tab !== "liked" && composer}
+      </View>}
+      renderItem={({ item }) => <PostCard item={item} onMap={onMap} onDeleted={() => load(lastPage.current)} />}
       ItemSeparatorComponent={() => <View style={styles.separator} />}
       refreshing={loading && !!data}
       onRefresh={() => void load(1)}
@@ -107,10 +124,10 @@ export function CommunityFeed({
           >
             <Feather name="message-circle" size={28} color={colors.primary} />
             <Text style={[styles.title, { color: colors.text }]}>
-              No reports yet
+              {query.tab === "liked" ? "No liked posts found" : query.q || query.tab !== "all" || query.media !== "all" ? "No matching updates" : "No reports yet"}
             </Text>
             <Text style={[styles.body, { color: colors.muted }]}>
-              Saved community reports and official updates will appear here.
+              {query.tab === "liked" ? "Posts and official updates you like will appear here. Try another search or browse the community feed." : query.q || query.tab !== "all" || query.media !== "all" ? "Try a different name, place, or filter." : "Saved community reports and official updates will appear here."}
             </Text>
           </View>
         ) : undefined
@@ -174,14 +191,17 @@ export function CommunityFeed({
 export function PostCard({
   item,
   onMap,
+  onDeleted,
 }: {
   item: FeedCard;
   onMap: (id?: string) => void;
+  onDeleted?: () => void;
 }) {
   const { colors } = useTheme();
   const router = useRouter();
   const [linkError, setLinkError] = useState("");
   const [preview, setPreview] = useState<PreviewMedia[] | null>(null);
+  const [removed, setRemoved] = useState(false);
   const open = async (path: string) => {
     try {
       setLinkError("");
@@ -198,6 +218,7 @@ export function PostCard({
     : item.status === "IN_REPAIR"
       ? "In progress"
       : "Reported";
+  if (removed) return null;
   return (
     <View
       style={[
@@ -206,6 +227,9 @@ export function PostCard({
       ]}
     >
       <View style={styles.authorRow}>
+        <Pressable accessibilityRole="link" accessibilityLabel={`View profile of ${item.author}`}
+          disabled={!validId(item.authorId)} onPress={() => { if (item.authorId) router.push(contributorDestination(item.authorId)); }}
+          style={({ pressed }) => [{ flex: 1, minWidth: 0, minHeight: 48, flexDirection: "row", alignItems: "center", gap: 10, opacity: pressed ? 0.7 : 1 }]}>
         <Avatar name={item.author} uri={profileImageUrl(item.authorAvatarUrl, apiOrigin())} size={42} />
         <View style={styles.authorCopy}>
           <Text style={[styles.author, { color: colors.text }]}>
@@ -224,6 +248,9 @@ export function PostCard({
             })}
           </Text>
         </View>
+        </Pressable>
+        <PostMenu target={{ id: item.recordId, kind: item.repost ? "repost" : "post", authorId: item.authorId, official: item.official, deleted: item.deleted }}
+          onDeleted={() => { setRemoved(true); onDeleted?.(); }} />
       </View>
       <Pressable
         accessibilityRole="link"
