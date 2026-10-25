@@ -37,7 +37,8 @@
     "lint": "expo lint",
     "check": "npm run typecheck && npm run lint",
     "export:web": "expo export --platform web",
-    "export:android": "expo export --platform android"
+    "export:android": "expo export --platform android",
+    "test:auth": "playwright test"
   },
   "private": true,
   "engines": {

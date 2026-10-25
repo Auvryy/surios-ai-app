@@ -48,3 +48,5 @@ example
 !.env.example
 *.keystore
 /artifacts/
+/test-results/
+/playwright-report/
