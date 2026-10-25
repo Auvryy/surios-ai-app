@@ -12,7 +12,7 @@ export default defineConfig({
   projects: [
     {
       name: "session",
-      testMatch: ["session.spec.ts", "report-controller.spec.ts"],
+      testMatch: ["session.spec.ts", "report-controller.spec.ts", "profile-contracts.spec.ts"],
     },
     {
       name: "browser",
