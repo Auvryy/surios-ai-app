@@ -49,6 +49,7 @@ test('login sends real fields once, restores on reload, loads saved reports and 
   });
   await login(page);
   await expect(page.getByText('Demo drainage report test-post', { exact: true })).toBeVisible();
+  await page.getByRole('link', { name: 'Open post', exact: true }).scrollIntoViewIfNeeded();
   expect(feedAuthorization).toBe(`Bearer ${token}`);
   expect(logins).toBe(1);
   await page.reload();
@@ -188,6 +189,20 @@ test('cumulative feed pagination replaces items instead of duplicating them', as
   await page.getByRole('button', { name: 'Load more reports' }).click();
   await expect(page.getByText('Demo drainage report two', { exact: true })).toBeVisible();
   await expect(page.getByText('Demo drainage report one', { exact: true })).toHaveCount(1);
+});
+
+test('official photo attachments appear in the feed with an overflow count', async ({ page }) => {
+  await page.route(`${origin}/media/*.png`, route => route.fulfill({ contentType: 'image/png', path: 'assets/images/icon.png' }));
+  await mock(page, async (route, path) => {
+    if (path !== '/api/community/posts') return false;
+    const repost = { id: 'official', body: 'Demo maintenance completed.', createdAt: '2026-10-25T00:00:00Z', author: { name: 'Demo municipal office' }, media: [], governmentUpdate: { status: 'RESOLVED', attachments: [{ kind: 'photo', url: '/media/one.png' }, { kind: 'photo', url: '/media/two.png' }] }, post: post() };
+    await json(route, { feed: [{ kind: 'repost', repost }], currentPage: 1, hasMore: false });
+    return true;
+  });
+  await login(page);
+  await expect(page.getByRole('img', { name: 'Photo attached by Demo municipal office' })).toBeAttached();
+  await expect(page.getByText('+1 photos', { exact: true })).toBeAttached();
+  await expect(page.getByRole('link', { name: 'Resolved: view official explanation', exact: true })).toBeAttached();
 });
 
 test('small, landscape and large-text layouts retain orange light appearance without overflow', async ({ page }) => {

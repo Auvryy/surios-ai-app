@@ -25,7 +25,11 @@ export function parseFeedPage(value: unknown): FeedPage {
       throw new ApiError('The server returned an invalid post.');
     }
     const media = Array.isArray(source.media) ? source.media.filter(isRecord) : [];
-    const photos = media.filter((item) => item.kind === 'photo' && typeof item.url === 'string');
+    const update = isRecord(quote) && isRecord(quote.governmentUpdate) ? quote.governmentUpdate : null;
+    const attachments = update && Array.isArray(update.attachments) ? update.attachments.filter(isRecord) : [];
+    const photos = [...new Map([...media, ...attachments]
+      .filter((item) => item.kind === 'photo' && typeof item.url === 'string')
+      .map((item) => [item.url, item])).values()];
     const cover = photos.find((item) => item.id === post.coverId) || photos[0];
     const official = isRecord(quote) && isRecord(quote.governmentUpdate);
     return {

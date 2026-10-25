@@ -193,3 +193,17 @@ test('feed contracts preserve canonical resolution links and replace cumulative 
   expect(() => publicUrl('https://outside/media', 'https://server')).toThrow(ApiError);
   expect(() => parseFeedPage({ feed: [{}] })).toThrow(ApiError);
 });
+
+test('official repair photos include attachment evidence without duplicating gallery media', () => {
+  const photo = { id: 'photo', kind: 'photo', url: '/media/evidence.jpg' };
+  const quote = {
+    id: 'official', body: 'Demo repair evidence', createdAt: '2026-10-25T00:00:00Z', author: { name: 'Demo office' },
+    media: [photo], governmentUpdate: { attachments: [photo, { id: 'second', kind: 'photo', url: '/media/second.jpg' }, { id: 'pdf', kind: 'document', url: '/media/record.pdf' }] },
+    post: { id: 'source', title: 'Original report', reportStatus: 'RESOLVED' },
+  };
+  const card = parseFeedPage({ feed: [{ kind: 'repost', repost: quote }], currentPage: 1, hasMore: false }).feed[0];
+  expect(card.photoCount).toBe(2);
+  expect(card.photoUrl).toBe('/media/evidence.jpg');
+  expect(card.official).toBe(true);
+  expect(card.status).toBe('RESOLVED');
+});

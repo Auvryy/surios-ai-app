@@ -75,7 +75,7 @@ function PostCard({ item }: { item: FeedCard }) {
       {item.photoUrl && <View style={styles.imageWrap}><Image source={{ uri: publicUrl(item.photoUrl, apiOrigin()) }} accessibilityLabel={`Photo attached by ${item.author}`} resizeMode="cover" style={styles.image} />{item.photoCount > 1 && <View style={[styles.count, { backgroundColor: colors.surface }]}><Text style={[styles.meta, { color: colors.text }]}>+{item.photoCount - 1} photos</Text></View>}</View>}
       {item.originalTitle && <View style={[styles.quote, { borderColor: colors.border }]}><Text style={[styles.meta, { color: colors.muted }]}>Original report</Text><Text style={[styles.body, { color: colors.text }]}>{item.originalTitle}</Text></View>}
       {!!item.location && <Text style={[styles.meta, { color: colors.muted }]}>{item.location}</Text>}
-      <Pressable accessibilityRole="link" onPress={() => void open(item.url)} style={({ pressed }) => [styles.button, { backgroundColor: colors.accent, opacity: pressed ? 0.7 : 1 }]}><Text style={[styles.buttonText, { color: colors.primary }]}>Open post</Text><Feather name="arrow-up-right" size={17} color={colors.primary} /></Pressable>
+      <Pressable accessibilityRole="link" accessibilityLabel="Open post" onPress={() => void open(item.url)} style={({ pressed }) => [styles.button, { backgroundColor: colors.accent, opacity: pressed ? 0.7 : 1 }]}><Text style={[styles.buttonText, { color: colors.primary }]}>Open post</Text><Feather name="arrow-up-right" accessible={false} aria-hidden size={17} color={colors.primary} /></Pressable>
       {!!linkError && <Text accessibilityRole="alert" style={[styles.meta, { color: colors.error }]}>{linkError}</Text>}
     </View>
   );
