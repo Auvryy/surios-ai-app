@@ -16,6 +16,8 @@ Implemented: camera/library photo/video selection, cover selection, foreground G
 
 Official-update links and canonical grouped-hazard status are available through feed/map data. Own profiles now include saved personal post history, name/avatar/cover editing, and office details/statistics, using the same Azure API as the website. See [PROFILE.md](PROFILE.md).
 
+Settings now support saved comments/replies and post-like email preferences, password changes, and recovery-link requests through the same backend. The interface mirrors the website's notification/security cards and handles unavailable email delivery. See [SETTINGS.md](SETTINGS.md).
+
 Next: in-app reactions, comments and repost/share. Acceptance: linked posts show the same official resolution, unrelated hazards remain independent and interactions persist across devices.
 
 ## Phase 4 — dedicated builds and release validation

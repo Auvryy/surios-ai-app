@@ -26,6 +26,7 @@ The mobile client connects **accounts, the saved community feed, the hazard map 
 - Native session tokens in Expo SecureStore, browser-preview tokens in tab-scoped sessionStorage, server-validated restoration, expiry handling and logout.
 - Saved citizen posts and official updates, photo previews, cumulative pagination, refresh/retry and links to the website's original posts and resolution evidence.
 - Profile tab and protected `/profile` route with the website's cover/avatar layout, saved personal post history, editable name and photos, and office details/statistics for government accounts. Changes use the existing Azure profile API and refresh the shared account identity.
+- Settings from the profile gear or protected `/settings` route: saved email notification preferences, password changes and reset-link requests through the existing Azure endpoints. Delivery availability and failures are shown honestly; mobile remains light-only.
 
 **First run:** intro completion is stored locally on the device. New users see three introduction slides; the last step and Skip open registration. A valid restored session opens the citizen feed. Otherwise returning users see sign-in. Successful citizen registration creates an active account without requiring email delivery.
 
@@ -47,6 +48,7 @@ Road pavement; bridges and footbridges; drainage and flood canals; streetlights 
 | [Map and reporting](docs/REPORTING.md) | Field workflow, map controls, permissions, draft lifecycle and verification |
 | [Authentication](docs/AUTHENTICATION.md) | Shared account flow, session storage, Azure/local setup, failures and tests |
 | [Profiles](docs/PROFILE.md) | Website-matched profile design, photo/name editing, office details, Azure contracts and verification |
+| [Settings](docs/SETTINGS.md) | Email preferences, password changes, recovery email, security boundaries and verification |
 | [Agent quick reference](AGENTS.md) | Seven operating rules, workspace isolation and user-managed branch workflow |
 | [Engineering constitution](GEMINI.md) | Full mobile stack, code, security, UI, assessment and Git instructions |
 
@@ -136,7 +138,7 @@ Android export verifies the JavaScript bundle; it does **not** produce an APK or
 
 ```text
 src/
-  app/                 Entry gate, onboarding, auth, citizen feed/Home, protected Profile and About routes
+  app/                 Entry gate, onboarding, auth, citizen feed/Home, protected Profile/Settings and About routes
   components/          Shared React Native UI, citizen navigation, map controls and report composer
   config/              Public environment configuration
   auth/                Account contracts, session controller/provider and platform-specific token storage
