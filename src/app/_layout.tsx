@@ -9,7 +9,7 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const { colors } = useTheme();
-  const { session } = useSession();
+  const { session, status } = useSession();
   return (
     <>
       <StatusBar style="dark" />
@@ -26,9 +26,10 @@ function RootNavigator() {
           <Stack.Screen name="login" options={{ headerShown: false }} />
           <Stack.Screen name="register" options={{ headerShown: false }} />
         </Stack.Protected>
-        <Stack.Protected guard={!!session}>
+        <Stack.Protected guard={!!session || status === 'loading' || status === 'unavailable'}>
           <Stack.Screen name="citizen" options={{ headerShown: false }} />
           <Stack.Screen name="home" options={{ headerShown: false }} />
+          <Stack.Screen name="profile" options={{ headerShown: false }} />
         </Stack.Protected>
         <Stack.Screen name="about" options={{ title: 'About SuriOS' }} />
         <Stack.Screen name="+not-found" options={{ title: 'Page not found' }} />

@@ -7,6 +7,7 @@ export type FeedCard = {
   title: string;
   body: string;
   author: string;
+  authorAvatarUrl: string | null;
   createdAt: string;
   location: string;
   status: string;
@@ -90,6 +91,7 @@ export function parseFeedPage(value: unknown): FeedPage {
         : post.title,
       body: source.body,
       author: source.author.name,
+      authorAvatarUrl: typeof source.author.avatarUrl === "string" ? source.author.avatarUrl : null,
       createdAt: source.createdAt,
       location: typeof post.locationName === "string" ? post.locationName : "",
       status: typeof post.reportStatus === "string" ? post.reportStatus : "",

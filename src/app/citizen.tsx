@@ -16,6 +16,7 @@ import { HazardMap } from "@/components/map/hazard-map";
 import { Button, Notice, ui } from "@/components/ui/controls";
 import type { PublishedReport } from "@/lib/report-contracts";
 import type { Coordinate } from "@/lib/roads";
+import { ProfileScreen } from "@/components/profile/profile-screen";
 
 const infrastructureTypes = [
   "Roads",
@@ -26,9 +27,9 @@ const infrastructureTypes = [
   "Telecom",
 ];
 
-export default function CitizenScreen() {
+export default function CitizenScreen({ initialSection = "feed" }: { initialSection?: CitizenSection }) {
   const { colors } = useTheme();
-  const [section, setSection] = useState<CitizenSection>("feed");
+  const [section, setSection] = useState<CitizenSection>(initialSection);
   const [composerOpen, setComposerOpen] = useState(false);
   const [initialPoint, setInitialPoint] = useState<Coordinate | undefined>();
   const [feedVersion, setFeedVersion] = useState(0);
@@ -90,7 +91,7 @@ export default function CitizenScreen() {
         {section === "feed" ? (
           <CommunityFeed key={feedVersion} header={header} onMap={openMap} />
         ) : section === "profile" ? (
-          <SessionPanel profile />
+          <ProfileScreen user={session.user} onBack={() => setSection("feed")} onCreate={() => create()} onMap={openMap} onChanged={() => setFeedVersion((v) => v + 1)} />
         ) : section === "map" ? (
           <HazardMap onCreate={create} reportId={mapReportId} />
         ) : (
