@@ -2,6 +2,7 @@ import * as ImagePicker from "expo-image-picker";
 import { File as NativeFile } from "expo-file-system";
 import { Platform } from "react-native";
 import { ApiError } from "./api-client";
+import { appendUpload } from "./upload-file";
 import { profileChangesError, profilePhotoError, type ProfileChanges, type ProfilePhoto } from "./profile";
 
 export async function chooseProfilePhoto(): Promise<ProfilePhoto | null> {
@@ -42,12 +43,7 @@ export function profileForm(changes: ProfileChanges) {
   for (const kind of ["avatar", "cover"] as const) {
     const photo = changes[kind];
     if (!photo || (kind === "avatar" ? changes.removeAvatar : changes.removeCover)) continue;
-    if (Platform.OS === "web") {
-      if (!photo.file) throw new ApiError("This photo is no longer available. Choose it again.");
-      form.append(kind, photo.file, photo.name);
-    } else {
-      form.append(kind, { uri: photo.uri, name: photo.name, type: photo.mimeType } as unknown as Blob);
-    }
+    appendUpload(form, kind, photo);
   }
   return form;
 }

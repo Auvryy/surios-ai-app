@@ -2,6 +2,7 @@ import * as ImagePicker from "expo-image-picker";
 import { File as NativeFile } from "expo-file-system";
 import { Platform } from "react-native";
 import { ApiError } from "./api-client";
+import { appendUpload } from "./upload-file";
 import { validId } from "./discussion";
 import type { ProfilePhoto } from "./profile";
 export const REPOST_PHOTO_LIMIT = 5 * 1024 * 1024;
@@ -66,15 +67,7 @@ export function repostForm(
   if (photo) {
     const error = repostPhotoError(photo);
     if (error) throw new ApiError(error);
-    if (Platform.OS === "web") {
-      if (!photo.file) throw new ApiError("Choose this image again.");
-      form.append("image", photo.file, photo.name);
-    } else
-      form.append("image", {
-        uri: photo.uri,
-        name: photo.name,
-        type: photo.mimeType,
-      } as unknown as Blob);
+    appendUpload(form, "image", photo);
   }
   return form;
 }
