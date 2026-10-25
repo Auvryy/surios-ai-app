@@ -24,6 +24,8 @@ Implemented: saved in-app notifications for official progress/resolution across 
 
 ## Phase 4 — dedicated builds and release validation
 
-Replace template launcher artwork, configure Android package/iOS bundle identifiers, EAS project/build profiles and signing. Test a dedicated development APK on Android before a distributable build. Validate permissions, keyboard, safe areas, large text, offline errors, upload recovery and authentication expiry. iOS validation follows when hardware/distribution access is available.
+Implemented: Orie launcher icon, Android adaptive/themed layers, splash artwork and browser favicon, with validated colors, dimensions and safe margins. See [APP_BRANDING.md](APP_BRANDING.md). Installed launcher/splash acceptance still requires a rebuilt native binary.
+
+Configure Android package/iOS bundle identifiers, EAS project/build profiles and signing. Test a dedicated development APK on Android before a distributable build. Validate permissions, keyboard, safe areas, large text, offline errors, upload recovery and authentication expiry. iOS validation follows when hardware/distribution access is available.
 
 Offline drafts, push notifications and app-store publishing are optional later projects. Do not claim these are included in the initialized starter.

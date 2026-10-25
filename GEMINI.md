@@ -104,7 +104,7 @@ src/reporting/              Evidence picker/uploads, foreground GPS and assessed
 src/constants/theme.ts      Fixed orange light-appearance tokens
 src/constants/onboarding.ts Versioned local first-run preference key
 src/components/auth/        Brand mark, onboarding illustrations and local-only account forms
-assets/                     Template launcher assets
+assets/                     Orie master/reference, launcher/splash/favicon assets and bundled map resources
 README.md                   Overview and quickstart
 AGENTS.md / GEMINI.md        Contributor and AI-agent instructions
 docs/ARCHITECTURE.md         Current and planned system design

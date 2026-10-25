@@ -20,6 +20,7 @@ The mobile client connects **accounts, the saved community feed, the hazard map 
 - Orange light-only appearance regardless of the device theme, safe-area layout and responsive browser preview.
 - Citizen feed with bottom navigation, a center camera/post action, live street map, evidence previews and the connected report composer. The Updates tab opens a saved notification inbox.
 - Saved in-app notifications for official progress/resolution and comments/replies, with unread badges, All/Unread filters, read actions and native discussion links.
+- Orie launcher icon, Android adaptive/themed icons, splash artwork and browser favicon; see [App branding](docs/APP_BRANDING.md).
 - File-based navigation and a missing-page screen.
 - Strict TypeScript, linting, reproducible npm lockfile and web/Android bundle commands.
 - Public API-origin configuration for the existing Azure backend.
@@ -34,7 +35,7 @@ The mobile client connects **accounts, the saved community feed, the hazard map 
 
 **Reporting:** camera/library evidence, photos/videos and cover selection, foreground GPS/manual pins, mapped road sections, server AI assessment, draft cancellation and real publishing. The map includes filters, clustering, road lines, source/evidence links and official resolution links.
 
-**Still planned:** phone push notifications and distribution configuration. The in-app inbox requires the matching notifications backend deployment; see [NOTIFICATIONS.md](docs/NOTIFICATIONS.md). Discussions use the existing backend, with persistence verified against a disposable local instance. Launcher icons remain Expo placeholders. Azure bearer API and browser login/session/feed/logout were verified at `https://surios.site`; localhost browser origins are now allowlisted. Real-device authentication/storage execution still requires device validation; browser tests and bundle exports do not prove it.
+**Still planned:** phone push notifications and distribution configuration. The in-app inbox requires the matching notifications backend deployment; see [NOTIFICATIONS.md](docs/NOTIFICATIONS.md). Discussions use the existing backend, with persistence verified against a disposable local instance. Orie launcher/splash/favicon assets are configured; installed-app branding still needs a rebuilt native binary and device acceptance. Azure bearer API and browser login/session/feed/logout were verified at `https://surios.site`; localhost browser origins are now allowlisted. Real-device authentication/storage execution still requires device validation; browser tests and bundle exports do not prove it.
 
 ### Reporting scope
 
@@ -51,6 +52,7 @@ Road pavement; bridges and footbridges; drainage and flood canals; streetlights 
 | [Authentication](docs/AUTHENTICATION.md) | Shared account flow, session storage, Azure/local setup, failures and tests |
 | [Profiles](docs/PROFILE.md) | Website-matched profile design, photo/name editing, office details, Azure contracts and verification |
 | [Post details and discussions](docs/DISCUSSIONS.md) | Native threads, official evidence, comments/replies, reactions, reposts, sharing and verification |
+| [App branding](docs/APP_BRANDING.md) | Orie source assets, generation/checking, platform configuration and native rebuild acceptance |
 | [Notifications](docs/NOTIFICATIONS.md) | Saved event inbox, recipient rules, read permissions, deployment and verification |
 | [Settings](docs/SETTINGS.md) | Email preferences, password changes, recovery email, security boundaries and verification |
 | [Agent quick reference](AGENTS.md) | Seven operating rules, workspace isolation and user-managed branch workflow |
@@ -149,7 +151,7 @@ src/
   lib/                 JSON/multipart transport, feed/map contracts, road geometry and motion preference
   reporting/           Draft lifecycle, media picker/uploads and foreground GPS
   constants/           Orange theme and onboarding preference key
-assets/                Bundled Leaflet/license, reference geometry and placeholder launcher artwork
+assets/                Bundled Leaflet/license, reference geometry and Orie branding/launcher assets
 docs/                  Development, architecture and roadmap
 ```
 
