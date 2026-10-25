@@ -6,7 +6,7 @@ Home/About screens, Expo Router, TypeScript, orange light-only theme, first-run 
 
 ## Phase 1 — authenticated access and feed
 
-Implemented: citizen signup, shared-account sign-in, bearer sessions, native SecureStore/browser tab storage, protected routes, approval handling, logout, expired-session recovery, paginated saved posts and website resolution links. Local real-backend and browser edge-case tests verify these flows; Azure bearer API login/session/feed/logout also passed. Remaining environment acceptance: Azure's browser-origin allowlist and a physical-device check. See [AUTHENTICATION.md](AUTHENTICATION.md).
+Implemented: citizen signup, shared-account sign-in, bearer sessions, native SecureStore/browser tab storage, protected routes, approval handling, logout, expired-session recovery, paginated saved posts and website resolution links. Local real-backend and browser edge-case tests verify these flows; Azure bearer API and browser login/session/feed/logout also passed after configuring the localhost allowlist. Remaining environment acceptance: a physical-device check. See [AUTHENTICATION.md](AUTHENTICATION.md).
 
 ## Phase 2 — citizen field reporting
 

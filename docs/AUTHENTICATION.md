@@ -14,8 +14,8 @@ you use to open the website, including its port when necessary. Do not append
 | --- | --- | --- |
 | Browser and local backend | `http://127.0.0.1:5185` | Local SvelteKit API running on that port |
 | Physical phone and local backend | `http://192.168.1.20:5185` | Replace with the PC's actual LAN IP; backend listens on `0.0.0.0` |
-| Azure during development | `http://YOUR_AZURE_IP:YOUR_WEBSITE_PORT` | Use the same working website address and actual port |
-| Released app | `https://YOUR_SURIOS_DOMAIN` | HTTPS and the merged mobile-compatible backend deployed |
+| Shared Azure backend, default | `https://surios.site` | Existing website accounts and saved data; localhost browser origins are allowlisted |
+| Released app | `https://surios.site` | HTTPS; native device/release validation still required |
 
 HTTP is allowed in development; release builds enforce HTTPS. The IP documented
 in the web architecture is `104.215.147.125`. After the user's Azure build finished,
@@ -34,9 +34,10 @@ the exact frontend origins, for example:
 API_ALLOWED_ORIGINS=http://localhost:8081,http://127.0.0.1:8081
 ```
 
-Azure initially returned 403 for this browser preflight because the origin was not
-allowlisted. After editing the VM's `.env`, recreate its web service from the web
-repository directory; an image rebuild is unnecessary for this runtime setting:
+Azure initially returned 403 for this browser preflight. After the user updated
+the VM's `.env` and recreated the web container, both listed origins returned 204
+with their exact allowed origin. For future changes, recreate the web service
+from the web repository directory; an image rebuild is unnecessary for this setting:
 
 ```bash
 docker compose -f docker-compose.prod.yml up -d --no-deps --force-recreate web
@@ -48,10 +49,18 @@ cookies to work around configuration. When Azure builds, local backend developme
 can proceed independently. After deployment, verify `GET /api` returns JSON before
 testing the same login on Azure. A missing/old endpoint produces a visible error.
 
-For Expo Go against the verified Azure backend, set
-`EXPO_PUBLIC_API_BASE_URL=https://surios.site` before starting Expo. The default
-local browser preview remains on `http://127.0.0.1:5185` until the Azure browser
-allowlist is configured. Neither an API key nor a database credential is needed.
+Both the local browser preview and Expo Go now use
+`EXPO_PUBLIC_API_BASE_URL=https://surios.site`. The tracked template uses this
+origin, and this checkout's ignored `.env.local` selects it for the running preview.
+That local file overrides `.env`; restart Expo after changing the origin. Neither
+an API key nor a database credential is needed.
+
+The actual browser flow at `http://localhost:8081` passed against Azure: sign-in
+200, feed 200 with 17 items, session restoration after reload 200, logout 200,
+the revoked token rejected with 401, and the tab credential cleared. All 13
+rendered images decoded without browser errors. Requests used only
+`https://surios.site` for API access; there was no local-backend fallback. The
+verification created and revoked its own session without creating accounts or posts.
 
 ## Implemented flow
 

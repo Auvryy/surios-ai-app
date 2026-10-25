@@ -49,7 +49,7 @@ Physical severity, community support and response priority remain separate conce
 
 The existing SvelteKit backend now exposes a documented mobile API alongside website loaders/actions. Mobile account/feed calls use bearer sessions; browser cookies remain separate. Remaining work:
 
-- Configure Azure's browser-preview allowlist and run authentication on a physical device. Native-style Azure API login/session/feed/logout are already verified at `https://surios.site`.
+- Run authentication on a physical device. Azure API and browser login/session/feed/logout are verified at `https://surios.site`, with both localhost browser origins allowlisted.
 - Add native camera/gallery/location tools and wire the existing assessment/publication contracts.
 - Preserve upload limits, draft ownership, cancellation and server-side validation.
 - Add in-app threads, social interactions and profile editing; existing links currently open the website.

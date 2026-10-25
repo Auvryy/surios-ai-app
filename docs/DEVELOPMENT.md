@@ -31,7 +31,7 @@ A dedicated Expo development build will be needed when adding native dependencie
 
 ## Backend origin
 
-Copy `.env.example` to `.env` and configure the same origin as the website. The template uses a local backend on port 5185. Environment files stay ignored; the template is tracked. Restart Expo after changing configuration and rebuild distributed apps to change bundled configuration. See [authentication setup](AUTHENTICATION.md).
+Copy `.env.example` to `.env` to use the existing Azure backend at `https://surios.site`. A local backend on port 5185 is optional. Environment files stay ignored; the template is tracked. An ignored `.env.local` overrides `.env` for local development. Restart Expo after changing configuration and rebuild distributed apps to change bundled configuration. See [authentication setup](AUTHENTICATION.md).
 
 - Azure: use the existing website address and port; HTTP IP addresses work during development, while releases require HTTPS. No additional Azure VM/IP/database is needed.
 - Phone accessing a local server: use your PC's reachable LAN IP and bind the server to the LAN interface.

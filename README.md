@@ -28,7 +28,7 @@ The mobile client now connects **account authentication and a read-only communit
 
 **First run:** intro completion is stored locally on the device. New users see three introduction slides; the last step and Skip open registration. A valid restored session opens the citizen feed. Otherwise returning users see sign-in. Successful citizen registration creates an active account without requiring email delivery.
 
-**Not implemented yet:** native uploads, camera/GPS, live hazard map, report assessment/publication, in-app thread discussions, reactions, reposting and profile editing. Full posts, discussions and official resolution evidence currently open on the website. The report composer remains a labeled preview and does not publish. Launcher icons remain Expo placeholders. Azure bearer API login/session/feed/logout were verified at `https://surios.site`; browser-preview access requires its allowlist configuration. Real-device authentication/storage execution still requires device validation; browser tests and bundle exports do not prove it.
+**Not implemented yet:** native uploads, camera/GPS, live hazard map, report assessment/publication, in-app thread discussions, reactions, reposting and profile editing. Full posts, discussions and official resolution evidence currently open on the website. The report composer remains a labeled preview and does not publish. Launcher icons remain Expo placeholders. Azure bearer API and browser login/session/feed/logout were verified at `https://surios.site`; localhost browser origins are now allowlisted. Real-device authentication/storage execution still requires device validation; browser tests and bundle exports do not prove it.
 
 ### Planned reporting scope
 
@@ -57,7 +57,7 @@ npm run web
 
 Open the URL printed by Expo, normally **http://localhost:8081**. Use browser responsive mode for a phone-sized viewport. This previews React Native Web; native camera, GPS and permission behavior still needs a phone or emulator.
 
-The template targets a local SuriOS backend at **http://127.0.0.1:5185**. Start that backend separately or edit the public origin to your existing Azure website address before starting Expo. The browser origin must be allowed by the backend. Sign in to open **http://localhost:8081/citizen**; direct signed-out visits are protected. See the [authentication setup](docs/AUTHENTICATION.md).
+The template targets the existing Azure backend at **https://surios.site**. Its browser allowlist includes `http://localhost:8081` and `http://127.0.0.1:8081`. Sign in with your website account to open **http://localhost:8081/citizen**; direct signed-out visits are protected. A separate local backend is optional. See the [authentication setup](docs/AUTHENTICATION.md).
 
 For the first clone:
 
@@ -106,10 +106,10 @@ The app now calls the existing account and feed APIs. PostgreSQL and Gemini rema
 Copy `.env.example` to ignored `.env` and set the public origin of the **same website server**, without `/api`:
 
 ```dotenv
-EXPO_PUBLIC_API_BASE_URL=https://your-surios-domain.example
+EXPO_PUBLIC_API_BASE_URL=https://surios.site
 ```
 
-This is a placeholder, not a deployed endpoint. An existing Azure IP plus its actual website port also works during development; no new server/IP/database is required. `EXPO_PUBLIC_` values are public and bundled into the client. Never include Gemini keys, database URLs, passwords or session secrets. Release builds require HTTPS. Restart Expo after changing the origin.
+This is the verified shared Azure backend. No additional server/IP/database is required. `EXPO_PUBLIC_` values are public and bundled into the client. Never include Gemini keys, database URLs, passwords or session secrets. Release builds require HTTPS. Restart Expo after changing the origin. An ignored `.env.local` overrides `.env` for local development; keep the intended origin consistent between them.
 
 A phone's `localhost` points to the phone, not your development PC. See the development guide before connecting to a local backend. Browser previews require the backend's exact `API_ALLOWED_ORIGINS` allowlist; native bearer requests need no synthetic Origin or browser cookie. The backend contract is [MOBILE_API.md in the web repository](https://github.com/Auvryy/surios-ai/blob/main/docs/MOBILE_API.md).
 
@@ -164,6 +164,6 @@ Read [AGENTS.md](AGENTS.md) and [GEMINI.md](GEMINI.md) before editing. Start gen
 
 ## 11. Next steps
 
-Validate account access on your physical device and Azure, then add photo capture, location selection and server-side assessment. In-app discussions and other interactions follow. Government administration stays on the website initially. See the [roadmap](docs/ROADMAP.md).
+Validate account access on your physical device, then add photo capture, location selection and server-side assessment. Azure API/browser account access is verified. In-app discussions and other interactions follow. Government administration stays on the website initially. See the [roadmap](docs/ROADMAP.md).
 
 The initial Expo toolchain has unresolved npm audit findings; see the [dependency audit note](docs/DEVELOPMENT.md#initial-dependency-audit). This foundation is for development and is not a release-ready APK.
