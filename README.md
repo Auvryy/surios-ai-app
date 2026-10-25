@@ -13,7 +13,7 @@ This repository contains the **mobile client**, built with **React Native, Expo,
 
 ### Current status
 
-This is an initialized mobile foundation, **not yet a connected reporting app**.
+The mobile client now connects **account authentication and a read-only community feed** to the existing SuriOS backend. Field reporting remains a later phase.
 
 - Three first-run introduction slides, persistent completion, and registration/sign-in interface with SuriOS orange branding.
 - Citizen feed (`/home` and `/citizen`) and About (`/about`) screens are available.
@@ -22,10 +22,13 @@ This is an initialized mobile foundation, **not yet a connected reporting app**.
 - File-based navigation and a missing-page screen.
 - Strict TypeScript, linting, reproducible npm lockfile and web/Android bundle commands.
 - Optional public API-origin configuration, ready for the integration phase.
+- Real citizen registration and sign-in with the same accounts as the website; government/admin accounts can sign in, with pending/rejected applications held at their approval screen.
+- Native session tokens in Expo SecureStore, browser-preview tokens in tab-scoped sessionStorage, server-validated restoration, expiry handling and logout.
+- Saved citizen posts and official updates, photo previews, cumulative pagination, refresh/retry and links to the website's original posts and resolution evidence.
 
-**UI present, backend not connected:** sign-in and registration forms validate basic fields but do not submit credentials or create accounts. Intro completion is stored locally on the device. On a fresh install, users see three introduction slides with Next controls; the last step opens registration. Skip opens registration directly, and returning users see sign-in first. Login and registration links let users switch between the forms.
+**First run:** intro completion is stored locally on the device. New users see three introduction slides; the last step and Skip open registration. A valid restored session opens the citizen feed. Otherwise returning users see sign-in. Successful citizen registration creates an active account without requiring email delivery.
 
-**Not implemented yet:** server authentication/account creation, account persistence, live feed, uploads, camera/GPS, live hazard map, report assessment, reactions, comments and government-resolution links. The citizen screen is an interface preview: it shows no fabricated live posts, and the report composer does not publish or persist a report. No AI assessments are presented. Launcher icons are Expo template placeholders pending final SuriOS artwork.
+**Not implemented yet:** native uploads, camera/GPS, live hazard map, report assessment/publication, in-app thread discussions, reactions, reposting and profile editing. Full posts, discussions and official resolution evidence currently open on the website. The report composer remains a labeled preview and does not publish. Launcher icons remain Expo placeholders. Azure bearer API login/session/feed/logout were verified at `https://surios.site`; browser-preview access requires its allowlist configuration. Real-device authentication/storage execution still requires device validation; browser tests and bundle exports do not prove it.
 
 ### Planned reporting scope
 
@@ -38,6 +41,7 @@ Road pavement; bridges and footbridges; drainage and flood canals; streetlights 
 | [Development guide](docs/DEVELOPMENT.md) | Arch Linux setup, browser and phone testing, environment variables and checks |
 | [Architecture](docs/ARCHITECTURE.md) | Mobile/web/backend responsibilities, data flow and security boundaries |
 | [Roadmap](docs/ROADMAP.md) | Ordered implementation phases and acceptance criteria |
+| [Authentication](docs/AUTHENTICATION.md) | Shared account flow, session storage, Azure/local setup, failures and tests |
 | [Agent quick reference](AGENTS.md) | Seven operating rules, workspace isolation and user-managed branch workflow |
 | [Engineering constitution](GEMINI.md) | Full mobile stack, code, security, UI, assessment and Git instructions |
 
@@ -47,12 +51,13 @@ Use **Node.js LTS** (Node 24 recommended; see `.nvmrc`), npm, Git and your exist
 
 ```bash
 npm ci
+cp .env.example .env
 npm run web
 ```
 
 Open the URL printed by Expo, normally **http://localhost:8081**. Use browser responsive mode for a phone-sized viewport. This previews React Native Web; native camera, GPS and permission behavior still needs a phone or emulator.
 
-Open **http://localhost:8081/citizen** to inspect the citizen feed and bottom navigation directly, or use “Explore the citizen feed preview” from the sign-in or registration screen. The main feed and composer are preview-only until mobile API integration is complete.
+The template targets a local SuriOS backend at **http://127.0.0.1:5185**. Start that backend separately or edit the public origin to your existing Azure website address before starting Expo. The browser origin must be allowed by the backend. Sign in to open **http://localhost:8081/citizen**; direct signed-out visits are protected. See the [authentication setup](docs/AUTHENTICATION.md).
 
 For the first clone:
 
@@ -89,23 +94,24 @@ Enable USB debugging, connect and authorize your phone, then run `scrcpy`. These
 | TypeScript | Static type checking | Makes screen and future API contracts easier to maintain |
 | React Native Web | Browser development preview | Enables layout iteration without an Android emulator |
 | React Native StyleSheet | Layout and semantic theme tokens | Minimal styling dependencies and consistent orange branding |
-| Existing SvelteKit backend on Azure | Future authenticated API access | Reuses business rules and the existing deployment |
+| Expo SecureStore | Persistent native session credential storage | Uses the platform's encrypted storage; tokens are not stored in AsyncStorage |
+| Existing SvelteKit backend on Azure | Authenticated JSON API access | Reuses business rules and the existing deployment |
 | Existing PostgreSQL + Drizzle | Shared persistence through the backend | One authoritative dataset for web and mobile |
 | Existing server-side Gemini integration | Future evidence-grounded assessment | AI credentials and assessment rules stay on the server |
 
-The final three rows describe the existing platform and **planned mobile integration**; this starter does not connect to those services yet. Mobile navigation components are separate from the website's Svelte components.
+The app now calls the existing account and feed APIs. PostgreSQL and Gemini remain behind that backend; assessment integration is still planned. Mobile navigation components are separate from the website's Svelte components.
 
 ## 5. Configuration and security
 
-The starter runs without an environment file. When integration begins, copy `.env.example` to `.env` and set:
+Copy `.env.example` to ignored `.env` and set the public origin of the **same website server**, without `/api`:
 
 ```dotenv
 EXPO_PUBLIC_API_BASE_URL=https://your-surios-domain.example
 ```
 
-This is a placeholder, not a deployed endpoint. `EXPO_PUBLIC_` values are public and bundled into the client. Never include Gemini keys, database URLs, passwords or session secrets. The app will talk to the backend over HTTPS, never directly to PostgreSQL or Gemini.
+This is a placeholder, not a deployed endpoint. An existing Azure IP plus its actual website port also works during development; no new server/IP/database is required. `EXPO_PUBLIC_` values are public and bundled into the client. Never include Gemini keys, database URLs, passwords or session secrets. Release builds require HTTPS. Restart Expo after changing the origin.
 
-A phone's `localhost` points to the phone, not your development PC. See the development guide before connecting to a local backend. Mobile authentication and cross-origin browser access still require backend work.
+A phone's `localhost` points to the phone, not your development PC. See the development guide before connecting to a local backend. Browser previews require the backend's exact `API_ALLOWED_ORIGINS` allowlist; native bearer requests need no synthetic Origin or browser cookie. The backend contract is [MOBILE_API.md in the web repository](https://github.com/Auvryy/surios-ai/blob/main/docs/MOBILE_API.md).
 
 ## 6. Validation
 
@@ -114,6 +120,7 @@ npm run check
 npm run export:web
 npm run export:android
 npx expo-doctor
+npm run test:auth
 ```
 
 Android export verifies the JavaScript bundle; it does **not** produce an APK or prove native-device behavior. Native builds, signing, store submission and EAS project setup are not configured yet.
@@ -125,6 +132,8 @@ src/
   app/                 Entry gate, onboarding, auth, citizen feed/Home, About routes
   components/          Shared React Native UI, citizen navigation and report-composer preview
   config/              Public environment configuration
+  auth/                Account contracts, session controller/provider and platform-specific token storage
+  lib/                 JSON transport and feed contracts
   constants/           Orange theme and onboarding preference key
 assets/                Template launcher assets; branding replacement pending
 docs/                  Development, architecture and roadmap
@@ -136,18 +145,18 @@ The intended mobile workflow makes it easier to document defects in the field, l
 
 ## 9. Architecture at a glance
 
-The mobile app is a separate client of the existing Azure system. It shares backend records and rules with the website; it does not run SvelteKit, PostgreSQL or Gemini inside the phone.
+The mobile app is a separate client of the existing system. Authentication and feed reads share backend records and rules with the website; it does not run SvelteKit, PostgreSQL or Gemini inside the phone.
 
 ```mermaid
 flowchart LR
-    Mobile[React Native mobile app] -->|Planned HTTPS API| Azure[SvelteKit backend on Azure]
+    Mobile[React Native mobile app] -->|Account and feed HTTPS API| Azure[SvelteKit backend on Azure]
     Web[SuriOS website] --> Azure
     Azure --> DB[(PostgreSQL)]
     Azure --> Media[Server-managed media]
     Azure --> AI[Gemini assessment]
 ```
 
-Only the local mobile screens exist in this repository today. Read the [architecture guide](docs/ARCHITECTURE.md) for component responsibilities, request sequences, data ownership, security and deployment boundaries.
+Read the [architecture guide](docs/ARCHITECTURE.md) for implemented account/feed responsibilities and the planned reporting sequence. Azure readiness depends on deploying the merged backend and configuring the app's public origin.
 
 ## 10. Contributor workflow
 
@@ -155,6 +164,6 @@ Read [AGENTS.md](AGENTS.md) and [GEMINI.md](GEMINI.md) before editing. Start gen
 
 ## 11. Next steps
 
-Start with authenticated citizen access and a real feed from the existing backend. Add photo capture, location selection and server-side assessment next, then shared-hazard resolution links and interactions. Keep government administration on the website initially. See the [roadmap](docs/ROADMAP.md) for dependencies and completion criteria.
+Validate account access on your physical device and Azure, then add photo capture, location selection and server-side assessment. In-app discussions and other interactions follow. Government administration stays on the website initially. See the [roadmap](docs/ROADMAP.md).
 
 The initial Expo toolchain has unresolved npm audit findings; see the [dependency audit note](docs/DEVELOPMENT.md#initial-dependency-audit). This foundation is for development and is not a release-ready APK.

@@ -8,7 +8,7 @@ SuriOS, from Tagalog *suri* (inspect and analyze), helps communities document pu
 
 Supported assets include roads, bridges and footbridges, drainage and flood canals, streetlights and utility poles, water pipes and hydrants, and telecom/fiber cables. Avoid describing SuriOS solely as road safety or assuming every report concerns pavement.
 
-The mobile repo currently contains a branded foundation, not connected reporting features. Read the README and inspect source before claiming a feature is implemented. Future work should use the same Azure backend, accounts, reports and official resolutions as the website.
+The mobile repo contains a branded client with real account authentication, persisted sessions and a read-only saved community feed. Native reporting tools and in-app discussions are still future work. Read the README and source before claiming a feature is implemented. The app uses the same backend, accounts, reports and official resolutions as the website; Azure and physical-device validation remain environment-specific checks.
 
 ## Mandatory stack and responsibility boundaries
 
@@ -31,7 +31,7 @@ Do not replace the stack or introduce Flutter, Svelte UI, a second backend, a se
 - Keep public configuration in `src/config`; separate future API transport, domain contracts and native adapters from screen rendering. Do not create empty framework layers just to match a diagram.
 - Prefer `View`, `Text`, `Pressable`, list primitives and safe-area-aware layouts. Use platform-specific files only where capabilities genuinely differ.
 - Clean up subscriptions and pending requests. Guard stale assessment results, repeated submissions and unmounted state updates.
-- Use explicit loading, empty, error and retry states. Preserve valid user input on failures. Do not silently turn a failed request into fake success. The current login/register interface is deliberately unconnected: keep the notice clear and never claim credentials were accepted.
+- Use explicit loading, empty, error and retry states. Preserve valid user input on failures. Never turn a failed request into fake success. Login/signup success requires a validated backend response and saved session credential; report publishing is still an explicitly labeled preview.
 - Use virtualized lists for growing feeds. Avoid base64 media in application state or database records when file uploads/URIs are available.
 - Orange is the primary brand color. Do not change it to blue. Keep the interface minimal, with readable text, restrained borders and no decorative gradients.
 - Always render the app in the light appearance regardless of the operating system setting. Do not add dark mode or an appearance toggle. Respect safe areas, large text and reduced-motion settings. Give controls accessible names, visible focus in the browser, pressed feedback and at least 48-unit touch targets.
@@ -43,7 +43,7 @@ Do not replace the stack or introduce Flutter, Svelte UI, a second backend, a se
 - All live requests go to the configured backend origin through an authenticated API contract. Do not connect directly to PostgreSQL or Gemini.
 - `EXPO_PUBLIC_API_BASE_URL` is public configuration, not a secret. All EXPO_PUBLIC values are bundled into the app.
 - Never commit real environment files, passwords, session tokens, service keys, signing material or uploaded user evidence. A sanitized `.env.example` is the only environment-template exception.
-- Native authentication is not implemented. Do not assume web cookies automatically authenticate native requests. Agree on session transport, revocation, expiry and platform-secure credential storage before implementing sign-in.
+- Native authentication uses the backend's opaque bearer session tokens, Expo SecureStore on native and tab-scoped sessionStorage in browser preview. Never persist credentials in AsyncStorage or localStorage. Revalidate sessions on restore; clear on 401/logout and retain retryable state on network failures. Web cookies do not authenticate the native client. Preserve origin-bound storage, cancellation/race guards, server revocation and account approval behavior. See docs/AUTHENTICATION.md.
 - Browser preview requires deliberate cross-origin/session handling. Do not weaken web CSRF, authorization or origin checks globally to make mobile requests work.
 - Enforce roles, upload limits, draft ownership and validation on the backend. Hiding a button is not authorization.
 - Production API access uses HTTPS. Ask for camera/location permission when needed, explain denial and provide manual recovery where possible.
@@ -93,7 +93,9 @@ Current source layout:
 ```text
 src/app/                    Entry gate, onboarding, login/register, citizen feed and Home alias, About, root layout
 src/components/             Shared native UI, citizen bottom navigation and report-composer preview
-src/config/environment.ts   Public API-origin placeholder; no requests yet
+src/config/environment.ts   Public backend origin; same server as the website
+src/auth/                   Session contracts/controller/provider and platform-specific storage
+src/lib/                    JSON transport and saved-feed parsing
 src/constants/theme.ts      Fixed orange light-appearance tokens
 src/constants/onboarding.ts Versioned local first-run preference key
 src/components/auth/        Brand mark, onboarding illustrations and local-only account forms

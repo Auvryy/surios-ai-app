@@ -2,11 +2,11 @@
 
 ## Phase 0 — initialized foundation
 
-Home/About screens, Expo Router, TypeScript, orange light-only theme, first-run three-slide onboarding, local onboarding completion preference, validated registration/sign-in UI, citizen feed shell with bottom tabs and report-composer preview, browser preview, public configuration template and documentation. Account forms and the feed do not contact the server. This phase contains no connected user workflow.
+Home/About screens, Expo Router, TypeScript, orange light-only theme, first-run three-slide onboarding, local onboarding completion preference, account forms, citizen shell, report-composer preview, browser preview, public configuration and documentation. This foundation is retained by Phase 1.
 
 ## Phase 1 — authenticated access and feed
 
-Audit web APIs, agree on mobile session/secure-storage contracts and browser-origin rules, then connect the existing sign-in/register UI to real account creation and implement logout, session expiry and paginated saved posts. Acceptance: a real Azure account sees the same authorized posts in web and mobile; failures are visible and no secrets enter the bundle.
+Implemented: citizen signup, shared-account sign-in, bearer sessions, native SecureStore/browser tab storage, protected routes, approval handling, logout, expired-session recovery, paginated saved posts and website resolution links. Local real-backend and browser edge-case tests verify these flows; Azure bearer API login/session/feed/logout also passed. Remaining environment acceptance: Azure's browser-origin allowlist and a physical-device check. See [AUTHENTICATION.md](AUTHENTICATION.md).
 
 ## Phase 2 — citizen field reporting
 
