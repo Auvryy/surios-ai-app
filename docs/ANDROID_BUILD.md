@@ -8,15 +8,15 @@ The `preview` profile in [eas.json](../eas.json) builds a signed, installable AP
 | --- | --- |
 | App name | **SuriOS**, shown by the Android launcher |
 | Android package | `site.surios.app`, the app's installation identity |
-| App/build version | `1.0.0` / `1` |
+| App/build version | `1.0.0` / `2` |
 | Branding | Existing Orie launcher/adaptive icons and orange-on-light splash |
 | Build profile | `preview`: internal distribution, release APK, no development client |
 | API origin | `https://surios.site`, supplied as public build configuration |
 | Signing | EAS-managed Android credentials, configured during the first build |
 
-This checkout is linked to [@auvy/surios-ai-app](https://expo.dev/accounts/auvy/projects/surios-ai-app). The first signed preview APK completed successfully on 2026-10-25: [build 3299612b](https://expo.dev/accounts/auvy/projects/surios-ai-app/builds/3299612b-df22-4f63-b3fc-71e879981ab7), from commit `db848e0`. The downloaded APK is 94,210,328 bytes with SHA-256 `42b61a61a3196311ba54ca2ae6509fbc6343def8be83f8f74e8283e7a04b6733`. Its local path is ignored `artifacts/apk/SuriOS.apk`.
+This checkout is linked to [@auvy/surios-ai-app](https://expo.dev/accounts/auvy/projects/surios-ai-app). The current signed preview APK completed successfully on 2026-10-25: [build 294664c6](https://expo.dev/accounts/auvy/projects/surios-ai-app/builds/294664c6-f095-415a-bace-298ed8761547), from commit `5cffdce`. The downloaded APK is 94,217,184 bytes with SHA-256 `b615b5856a4452f405867a5986eedb348f666122412d68da6447e1eb134069d9`. Its local path is ignored `artifacts/apk/SuriOS.apk`. This build includes the compact Home composer, tighter navigation and overlaid photo/map gallery.
 
-The APK is installed on the connected Android 16 phone. Android reports package `site.surios.app`, version `1.0.0` / `1`, without the debuggable flag. Cold launch reached the light SuriOS onboarding screen in about 1.5 seconds, and Android App info showed the orange Orie icon and SuriOS name. The app's startup error log was empty. The APK contains its own JavaScript bundle and the Azure HTTPS origin. Full signed-in camera/GPS/map and splash acceptance remain separate checks. Store submission and iOS distribution are separate work. Keep the package identity and signing key consistent for subsequent updates.
+The APK is installed on the connected Android 16 phone. Android reports package `site.surios.app`, version `1.0.0` / `2`, without the debuggable flag. Cold launch took about 1.4 seconds, retained the existing login and loaded the saved feed with the new Home composer/navigation. The startup error log was empty. The initial installation verified the orange Orie icon and SuriOS name. This update passed 173 automated checks, with 20 opt-in backend checks skipped, plus type/lint checks, web/Android exports and Expo Doctor. Gallery switching, full evidence, road-map rendering and small/landscape/large-text behavior passed browser tests. Native gallery touch checks remain manual because this phone blocks remote input injection. Full camera/GPS/map and splash acceptance remain separate checks. Store submission and iOS distribution are separate work. Keep the package identity and signing key consistent for subsequent updates.
 
 ## First cloud build
 
