@@ -12,7 +12,7 @@ export default defineConfig({
   projects: [
     {
       name: "session",
-      testMatch: ["session.spec.ts", "report-controller.spec.ts"],
+      testMatch: ["session.spec.ts", "report-controller.spec.ts", "profile-contracts.spec.ts"],
     },
     {
       name: "browser",
@@ -21,6 +21,8 @@ export default defineConfig({
         "auth-live.spec.ts",
         "reporting.spec.ts",
         "reporting-live.spec.ts",
+        "profile.spec.ts",
+        "profile-live.spec.ts",
       ],
       use: {
         browserName: "chromium",
@@ -28,7 +30,8 @@ export default defineConfig({
         headless: true,
         ignoreHTTPSErrors:
           process.env.SURIOS_TEST_REPORTING_LIVE === "1" ||
-          process.env.SURIOS_TEST_LIVE === "1",
+          process.env.SURIOS_TEST_LIVE === "1" ||
+          process.env.SURIOS_TEST_PROFILE_LIVE === "1",
         trace: "off",
       },
     },

@@ -27,6 +27,8 @@ import {
   type FeedPage,
 } from "@/lib/feed";
 import { Button } from "@/components/ui/controls";
+import { Avatar } from "@/components/ui/avatar";
+import { profileImageUrl } from "@/lib/profile";
 import { EvidencePreview, type PreviewMedia } from "./evidence-preview";
 
 export function CommunityFeed({
@@ -169,7 +171,7 @@ export function CommunityFeed({
   );
 }
 
-function PostCard({
+export function PostCard({
   item,
   onMap,
 }: {
@@ -201,15 +203,7 @@ function PostCard({
       ]}
     >
       <View style={styles.authorRow}>
-        <View style={[styles.avatar, { backgroundColor: colors.accent }]}>
-          <Text style={[styles.buttonText, { color: colors.primary }]}>
-            {item.author
-              .split(" ")
-              .map((part) => part[0])
-              .slice(0, 2)
-              .join("")}
-          </Text>
-        </View>
+        <Avatar name={item.author} uri={profileImageUrl(item.authorAvatarUrl, apiOrigin())} size={42} />
         <View style={styles.authorCopy}>
           <Text style={[styles.author, { color: colors.text }]}>
             {item.author}
