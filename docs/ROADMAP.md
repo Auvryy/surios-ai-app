@@ -18,7 +18,7 @@ Official-update links and canonical grouped-hazard status are available through 
 
 Settings now support saved comments/replies and post-like email preferences, password changes, and recovery-link requests through the same backend. The interface mirrors the website's notification/security cards and handles unavailable email delivery. See [SETTINGS.md](SETTINGS.md).
 
-Next: in-app reactions, comments and repost/share. Acceptance: linked posts show the same official resolution, unrelated hazards remain independent and interactions persist across devices.
+Implemented: in-app post/update details, source and update reactions, comments/replies, comment likes, social reposts with optional images and device sharing/browser link fallback. Disposable-backend integration verifies that linked posts show the same official resolution, unrelated hazards remain independent and interactions persist across sessions and website reads. See [DISCUSSIONS.md](DISCUSSIONS.md). Remaining environment acceptance: native sharing, keyboard, media and document handoff on a physical device.
 
 ## Phase 4 — dedicated builds and release validation
 

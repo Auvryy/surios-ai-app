@@ -10,7 +10,7 @@ The Profile tab and protected `/profile` route use the existing SuriOS account a
 - Retain editor input and selected files on a failed save. No success message appears until the API confirms the account's saved profile. While saving, repeat submission, editing and sheet dismissal are disabled.
 - Refresh session identity and the community feed after a confirmed change. Reopening `/profile` preserves that route while a saved session is verified. Missing or revoked credentials return to sign-in.
 - Keep the current account's email and sign-out control available. Private account email comes from its authenticated session, not from a public profile response.
-- Reuse existing feed cards, media previews, hazard-map navigation and official-resolution links. Full discussions continue to open on the website; this feature does not add in-app reactions, comments or repost creation.
+- Reuse existing feed cards, media previews, hazard-map navigation and official-resolution links. Full discussions now open in-app, including reactions, comments/replies and social reposts; see [DISCUSSIONS.md](DISCUSSIONS.md).
 
 ## Shared Azure contract
 

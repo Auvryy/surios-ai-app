@@ -24,7 +24,8 @@ The mobile client connects **accounts, the saved community feed, the hazard map 
 - Public API-origin configuration for the existing Azure backend.
 - Real citizen registration and sign-in with the same accounts as the website; government/admin accounts can sign in, with pending/rejected applications held at their approval screen.
 - Native session tokens in Expo SecureStore, browser-preview tokens in tab-scoped sessionStorage, server-validated restoration, expiry handling and logout.
-- Saved citizen posts and official updates, photo previews, cumulative pagination, refresh/retry and links to the website's original posts and resolution evidence.
+- Saved citizen posts and official updates, photo previews, cumulative pagination and refresh/retry.
+- In-app post details and official updates with full evidence, current hazard status, comments/replies, post/comment likes, social reposts with optional images, and device sharing. Feed and profile posts open the same saved discussions as the website.
 - Profile tab and protected `/profile` route with the website's cover/avatar layout, saved personal post history, editable name and photos, and office details/statistics for government accounts. Changes use the existing Azure profile API and refresh the shared account identity.
 - Settings from the profile gear or protected `/settings` route: saved email notification preferences, password changes and reset-link requests through the existing Azure endpoints. Delivery availability and failures are shown honestly; mobile remains light-only.
 
@@ -32,7 +33,7 @@ The mobile client connects **accounts, the saved community feed, the hazard map 
 
 **Reporting:** camera/library evidence, photos/videos and cover selection, foreground GPS/manual pins, mapped road sections, server AI assessment, draft cancellation and real publishing. The map includes filters, clustering, road lines, source/evidence links and official resolution links.
 
-**Still planned:** in-app discussions, reactions, reposting and notifications. Full discussions and official resolution evidence open on the website. Launcher icons remain Expo placeholders. Azure bearer API and browser login/session/feed/logout were verified at `https://surios.site`; localhost browser origins are now allowlisted. Real-device authentication/storage execution still requires device validation; browser tests and bundle exports do not prove it.
+**Still planned:** notifications and distribution configuration. Discussions use the existing backend, with persistence verified against a disposable local instance. Launcher icons remain Expo placeholders. Azure bearer API and browser login/session/feed/logout were verified at `https://surios.site`; localhost browser origins are now allowlisted. Real-device authentication/storage execution still requires device validation; browser tests and bundle exports do not prove it.
 
 ### Reporting scope
 
@@ -48,6 +49,7 @@ Road pavement; bridges and footbridges; drainage and flood canals; streetlights 
 | [Map and reporting](docs/REPORTING.md) | Field workflow, map controls, permissions, draft lifecycle and verification |
 | [Authentication](docs/AUTHENTICATION.md) | Shared account flow, session storage, Azure/local setup, failures and tests |
 | [Profiles](docs/PROFILE.md) | Website-matched profile design, photo/name editing, office details, Azure contracts and verification |
+| [Post details and discussions](docs/DISCUSSIONS.md) | Native threads, official evidence, comments/replies, reactions, reposts, sharing and verification |
 | [Settings](docs/SETTINGS.md) | Email preferences, password changes, recovery email, security boundaries and verification |
 | [Agent quick reference](AGENTS.md) | Seven operating rules, workspace isolation and user-managed branch workflow |
 | [Engineering constitution](GEMINI.md) | Full mobile stack, code, security, UI, assessment and Git instructions |
@@ -174,6 +176,6 @@ Read [AGENTS.md](AGENTS.md) and [GEMINI.md](GEMINI.md) before editing. Start gen
 
 ## 11. Next steps
 
-Validate the camera, GPS, map gestures, session storage and upload recovery on your physical device. Browser reporting and a real local backend save/read flow are tested. In-app discussions and other interactions follow. Government administration stays on the website initially. See the [roadmap](docs/ROADMAP.md).
+Validate the camera, GPS, map gestures, session storage and upload recovery on your physical device. Browser reporting and a real local backend save/read flow are tested. In-app discussions, reactions and image reposts are implemented and verified against an isolated real backend; device sharing and native media still need phone acceptance. Government administration stays on the website initially. See the [roadmap](docs/ROADMAP.md).
 
 The initial Expo toolchain has unresolved npm audit findings; see the [dependency audit note](docs/DEVELOPMENT.md#initial-dependency-audit). This foundation is for development and is not a release-ready APK.

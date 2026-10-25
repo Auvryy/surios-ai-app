@@ -82,7 +82,7 @@ verification created and revoked its own session without creating accounts or po
 6. API reads attach `Authorization: Bearer <accessToken>`. The feed replaces the
    collection on cumulative page loads, refreshes on request and renders server
    data only. Current shared hazard status and official resolution links come
-   from the backend. Full posts/discussions currently open on the website.
+   from the backend. Full posts/discussions open in-app; see [DISCUSSIONS.md](DISCUSSIONS.md).
 7. Logout calls `POST /api/auth/logout` to revoke the current session, then clears
    device storage. A 401 also clears the session. During a network outage, logout
    clears this device and explicitly states that remote revocation could not be
