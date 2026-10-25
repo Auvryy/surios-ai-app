@@ -4,6 +4,10 @@ import { parseMedia, type PostMedia } from "./report-contracts";
 
 export type FeedCard = {
   id: string;
+  recordId: string;
+  postId: string;
+  authorId: string | null;
+  deleted: boolean;
   title: string;
   body: string;
   author: string;
@@ -25,6 +29,7 @@ export type FeedPage = {
   feed: FeedCard[];
   hasMore: boolean;
   currentPage: number;
+  total: number | null;
 };
 
 export function parseFeedPage(value: unknown): FeedPage {
@@ -34,7 +39,8 @@ export function parseFeedPage(value: unknown): FeedPage {
     typeof value.hasMore !== "boolean" ||
     !Number.isInteger(value.currentPage) ||
     Number(value.currentPage) < 1 ||
-    Number(value.currentPage) > 50
+    Number(value.currentPage) > 50 ||
+    (value.total !== undefined && (!Number.isSafeInteger(value.total) || Number(value.total) < 0))
   ) {
     throw new ApiError(
       "The server returned an invalid feed. Please try again.",
@@ -84,6 +90,10 @@ export function parseFeedPage(value: unknown): FeedPage {
     const official = isRecord(quote) && isRecord(quote.governmentUpdate);
     return {
       id: `${entry.kind}:${source.id}`,
+      recordId: source.id,
+      postId: post.id,
+      authorId: typeof source.author.id === "string" ? source.author.id : null,
+      deleted: !isRecord(quote) && !!post.deletedAt,
       title: isRecord(quote)
         ? official
           ? "Government update"
@@ -120,6 +130,7 @@ export function parseFeedPage(value: unknown): FeedPage {
     feed,
     hasMore: value.hasMore,
     currentPage: Number(value.currentPage),
+    total: typeof value.total === "number" ? value.total : null,
   };
 }
 

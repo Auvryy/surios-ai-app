@@ -1,6 +1,7 @@
 import { isRecord, type UserRole } from "../auth/contracts";
 import { ApiError } from "./api-client";
 import { parseFeedPage, type FeedPage } from "./feed";
+import { validId } from "./discussion";
 
 export type GovernmentProfile = {
   level: "MUNICIPAL" | "BARANGAY";
@@ -15,7 +16,7 @@ export type PublicProfile = {
   coverUrl: string | null;
   governmentProfile: GovernmentProfile | null;
 };
-export type ProfilePage = FeedPage & {
+export type ProfilePage = Omit<FeedPage, "total"> & {
   profile: PublicProfile;
   isOwner: boolean;
   total: number;
@@ -57,13 +58,13 @@ function count(value: unknown): value is number {
   return typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
 }
 
-export function parseProfilePage(value: unknown, viewerId: string, origin: string): ProfilePage {
+function readProfilePage(value: unknown, expectedId: string, viewerId: string, origin: string): ProfilePage {
   if (!isRecord(value) || !isRecord(value.profile) || typeof value.isOwner !== "boolean" || !count(value.total))
     throw new ApiError("Your profile could not be read. Please try again.");
   const profile = value.profile;
   if (typeof profile.id !== "string" || !profile.id || typeof profile.name !== "string" || !profile.name.trim() ||
       !["CITIZEN", "OFFICER", "ENGINEER", "ADMIN"].includes(String(profile.role)) ||
-      profile.id !== viewerId || !value.isOwner)
+      profile.id !== expectedId || value.isOwner !== (profile.id === viewerId))
     throw new ApiError("The server returned a different profile. Please reload your account.");
   const role = profile.role as UserRole;
   let governmentProfile: GovernmentProfile | null = null;
@@ -85,8 +86,23 @@ export function parseProfilePage(value: unknown, viewerId: string, origin: strin
     ...parseFeedPage(value),
     profile: { id: profile.id, name: profile.name, role,
       avatarUrl: profileImageUrl(profile.avatarUrl, origin), coverUrl: profileImageUrl(profile.coverUrl, origin), governmentProfile },
-    isOwner: true, total: value.total, statistics,
+    isOwner: value.isOwner, total: value.total, statistics,
   };
+}
+
+/** Own-account editing keeps its original strict identity/ownership boundary. */
+export function parseProfilePage(value: unknown, viewerId: string, origin: string): ProfilePage {
+  return readProfilePage(value, viewerId, viewerId, origin);
+}
+
+export function parsePublicProfilePage(value: unknown, expectedId: string, viewerId: string, origin: string): ProfilePage {
+  if (!validId(expectedId)) throw new ApiError("Profile not found.", 404);
+  return readProfilePage(value, expectedId.toLowerCase(), viewerId, origin);
+}
+
+export function contributorDestination(id: string) {
+  if (!validId(id)) throw new ApiError("Profile not found.", 404);
+  return { pathname: "/citizen" as const, params: { profile: id } };
 }
 
 export function profilePhotoError(photo: ProfilePhoto): string | null {
