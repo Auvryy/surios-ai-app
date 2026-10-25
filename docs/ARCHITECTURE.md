@@ -26,7 +26,7 @@ Map tile requests go directly to OpenStreetMap without session headers. Road loo
 
 | Layer | Technology/location | Purpose and boundary |
 | --- | --- | --- |
-| Routing and screens | Expo Router, `src/app` | Entry/onboarding, authentication, protected citizen area, Home alias, Profile and About. Protected links retain their destination during session verification; screen gates hold private data until the account is active. No SQL or AI logic. |
+| Routing and screens | Expo Router, `src/app` | Entry/onboarding, authentication, protected citizen area, Home alias, Profile, Settings and About. Protected links retain their destination during session verification; screen gates hold private data until the account is active. No SQL or AI logic. |
 | Presentation | React Native, `src/components` | Native feed, sheets, evidence/video preview, composer, map controls and bottom navigation; shadcn-like flat surfaces and borders. |
 | Design tokens | `src/constants/theme.ts` | Orange, fixed light appearance, readable surface/text/error/success colors. Device dark mode does not change the theme. |
 | Account/session | `src/auth` | Validated account contracts, restore/login/logout, approval handling, origin-bound credentials, expiry and race protection. |
@@ -35,6 +35,7 @@ Map tile requests go directly to OpenStreetMap without session headers. Road loo
 | API transport | `src/lib/api-client.ts` | JSON/multipart, bearer headers, cancellation, bounded timeouts, origin/path checks and server error details. Multipart boundaries come from the transport. |
 | Domain contracts | `src/lib/feed.ts`, `map-data.ts`, `report-contracts.ts` | Validate API data before rendering; preserve canonical status/severity and source/resolution links. |
 | Own profile | `src/lib/profile.ts`, `profile-media.ts`, `src/components/profile` | Validate the signed-in account's profile, personal cumulative feed and office statistics; save public name, office fields and multipart photos through the existing API. Profile images are trusted public `/media` URLs. |
+| Settings | `src/lib/settings.ts`, `src/components/settings` | Load and save email preference booleans; change passwords and request recovery email with the existing bearer APIs. Validate confirmed responses, keep passwords only in memory and leave website appearance preferences unchanged. |
 | Reporting lifecycle | `src/reporting/report-controller.ts` | In-memory form/draft state, evidence/context invalidation, cancellation/discard, cover mapping and idempotent publication. |
 | Device evidence | Expo ImagePicker / FileSystem | System library and camera, file metadata and URI uploads. No base64 evidence copies in app state. |
 | Device location | Expo Location | Foreground single location fix, permission/timeout handling and manual fallback. No background tracking. |
@@ -132,6 +133,7 @@ Severity, support and priority remain separate returned values. The app does not
 | Account | `/api/auth/*`, `/api/account` | Field retention, approval screen, restore/retry, clear on 401 |
 | Saved feed | `/api/community/posts` | Cumulative pages replace data; refresh/retry; public links use backend origin |
 | Profile | `/api/profile` GET/POST | Owned profile and personal post history; retained editor input/photos on errors, photo removal flags, session refresh after confirmed saves |
+| Settings and security | `/api/settings` GET/PATCH, `/api/auth/password`, `/api/settings/reset-link` | Retain unsaved choices on failure; acknowledge only validated responses; current session survives password changes, other sessions are revoked server-side; delivery errors remain visible |
 | Map | `/api/map/reports`, `/api/map/reports/:id` | Last loaded reports, accessible list, direct older-hazard lookup |
 | Nearby roads | `/api/roads?lat=...&lng=...` | Stale/repeated lookup guard, server message, point fallback |
 | Assessment | `/api/community/assess` | Retained files/text, longer timeout, cancellation, reason/evidence on rejection |
