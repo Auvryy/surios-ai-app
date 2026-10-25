@@ -1,6 +1,6 @@
 import Feather from "@expo/vector-icons/Feather";
 import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BrandMark } from "@/components/auth/brand-mark";
 import {
@@ -16,6 +16,9 @@ import { HazardMap } from "@/components/map/hazard-map";
 import { Button, Notice, ui } from "@/components/ui/controls";
 import type { PublishedReport } from "@/lib/report-contracts";
 import type { Coordinate } from "@/lib/roads";
+import { NotificationInbox } from "@/components/notifications/notification-inbox";
+import { useNotifications } from "@/components/notifications/notification-provider";
+import { unreadLabel } from "@/lib/notifications";
 import { ProfileScreen } from "@/components/profile/profile-screen";
 
 const infrastructureTypes = [
@@ -29,6 +32,7 @@ const infrastructureTypes = [
 
 export default function CitizenScreen({ initialSection = "feed" }: { initialSection?: CitizenSection }) {
   const { colors } = useTheme();
+  const { unreadCount } = useNotifications();
   const [section, setSection] = useState<CitizenSection>(initialSection);
   const [composerOpen, setComposerOpen] = useState(false);
   const [initialPoint, setInitialPoint] = useState<Coordinate | undefined>();
@@ -63,6 +67,7 @@ export default function CitizenScreen({ initialSection = "feed" }: { initialSect
       <CommunityHeader
         onUpdates={() => setSection("updates")}
         onMap={() => openMap()}
+        unreadCount={unreadCount}
       />
       {published && (
         <View style={ui.gap}>
@@ -95,19 +100,12 @@ export default function CitizenScreen({ initialSection = "feed" }: { initialSect
         ) : section === "map" ? (
           <HazardMap onCreate={create} reportId={mapReportId} />
         ) : (
-          <ScrollView
-            contentContainerStyle={styles.scroll}
-            keyboardShouldPersistTaps="handled"
-          >
-            <View style={styles.content}>
-              {header}
-              {section === "updates" && <UpdatesSection />}
-            </View>
-          </ScrollView>
+          <NotificationInbox header={header} />
         )}
 
         <CitizenTabBar
           active={section}
+          unreadCount={unreadCount}
           onChange={(next) => {
             if (next === "map") setMapReportId(undefined);
             setSection(next);
@@ -129,9 +127,11 @@ export default function CitizenScreen({ initialSection = "feed" }: { initialSect
 function CommunityHeader({
   onUpdates,
   onMap,
+  unreadCount,
 }: {
   onUpdates: () => void;
   onMap: () => void;
+  unreadCount: number | null;
 }) {
   const { colors } = useTheme();
   return (
@@ -146,6 +146,7 @@ function CommunityHeader({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Open updates"
+          accessibilityHint={unreadLabel(unreadCount)}
           onPress={onUpdates}
           style={({ pressed }) => [
             styles.notificationButton,
@@ -157,6 +158,7 @@ function CommunityHeader({
           ]}
         >
           <Feather name="bell" size={20} color={colors.text} />
+          {!!unreadCount && <View accessible={false} style={[styles.unreadBadge, { backgroundColor: colors.primary }]}><Text numberOfLines={1} style={[styles.unreadBadgeText, { color: colors.onPrimary }]}>{unreadCount > 99 ? "99+" : unreadCount}</Text></View>}
         </Pressable>
       </View>
       <Pressable
@@ -270,74 +272,9 @@ function FeedSection({ onCreate }: { onCreate: () => void }) {
   );
 }
 
-function UpdatesSection() {
-  const { colors } = useTheme();
-  return (
-    <View style={styles.section}>
-      <View style={styles.headingBlock}>
-        <Text style={[styles.eyebrow, { color: colors.primary }]}>
-          STAY IN THE LOOP
-        </Text>
-        <Text
-          accessibilityRole="header"
-          style={[styles.pageTitle, { color: colors.text }]}
-        >
-          Your updates
-        </Text>
-        <Text style={[styles.body, { color: colors.muted }]}>
-          Follow conversations and see progress from local offices.
-        </Text>
-      </View>
-      <EmptySectionCard
-        icon="bell"
-        title="No updates yet"
-        body="In-app notifications are coming next. Official updates and resolution evidence are available from the community feed."
-      />
-      <PreviewNote />
-    </View>
-  );
-}
-
-function EmptySectionCard({
-  icon,
-  title,
-  body,
-}: {
-  icon: "bell" | "message-circle";
-  title: string;
-  body: string;
-}) {
-  const { colors } = useTheme();
-  return (
-    <View
-      style={[
-        styles.emptyCard,
-        { backgroundColor: colors.surface, borderColor: colors.border },
-      ]}
-    >
-      <View style={[styles.profileIcon, { backgroundColor: colors.accent }]}>
-        <Feather name={icon} size={22} color={colors.primary} />
-      </View>
-      <Text style={[styles.emptyTitle, { color: colors.text }]}>{title}</Text>
-      <Text style={[styles.emptyBody, { color: colors.muted }]}>{body}</Text>
-    </View>
-  );
-}
-
-function PreviewNote() {
-  const { colors } = useTheme();
-  return (
-    <View style={[styles.previewNote, { borderColor: colors.border }]}>
-      <Feather name="info" size={15} color={colors.muted} />
-      <Text style={[styles.previewNoteText, { color: colors.muted }]}>
-        Notifications are a preview. Open a post on the website to follow its
-        discussion.
-      </Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
+  unreadBadge: { position: "absolute", top: -3, right: -5, minWidth: 20, minHeight: 20, borderRadius: 12, paddingHorizontal: 4, alignItems: "center", justifyContent: "center" },
+  unreadBadgeText: { fontSize: 10, lineHeight: 15, fontWeight: "700" },
   safe: { flex: 1 },
   shell: { flex: 1, width: "100%", maxWidth: 520, alignSelf: "center" },
   scroll: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 28 },
