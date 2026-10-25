@@ -120,18 +120,18 @@ npx expo-doctor
 ```
 
 `test:auth` runs session/transport tests and browser tests with explicit mocked
-responses for errors and edge cases. It starts an isolated Expo preview on port
+responses for errors and edge cases. It serves an isolated Expo web export on port
 8082 and requires Playwright Chromium (`npx playwright install chromium` once).
 No real email, Gemini request or production account is used by those tests.
 
 The two live tests are opt-in and require a **disposable local backend/database**
-with the current web schema, CORS for `http://localhost:8082`, an account
+with a loopback HTTPS proxy, the current web schema, CORS for `http://localhost:8082`, an account
 `mobile-auth@example.test` with password `MobileAuthTest123!`, and a labeled
 post titled `Demo · Mobile authentication verification`. They create additional
 test accounts, so do not target production:
 
 ```bash
-SURIOS_TEST_LIVE=1 SURIOS_TEST_API_ORIGIN=http://127.0.0.1:5185 npm run test:auth
+SURIOS_TEST_LIVE=1 SURIOS_TEST_API_ORIGIN=https://127.0.0.1:5188 npm run test:auth
 ```
 
 On 2026-10-25, session/transport and browser checks passed, including real-backend

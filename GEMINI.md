@@ -8,7 +8,7 @@ SuriOS, from Tagalog *suri* (inspect and analyze), helps communities document pu
 
 Supported assets include roads, bridges and footbridges, drainage and flood canals, streetlights and utility poles, water pipes and hydrants, and telecom/fiber cables. Avoid describing SuriOS solely as road safety or assuming every report concerns pavement.
 
-The mobile repo contains a branded client with real account authentication, persisted sessions and a read-only saved community feed. Native reporting tools and in-app discussions are still future work. Read the README and source before claiming a feature is implemented. The app uses the same backend, accounts, reports and official resolutions as the website; Azure and physical-device validation remain environment-specific checks.
+The mobile repo contains a branded client with real account authentication, persisted sessions and a saved community feed, hazard map and field reporting. In-app discussions and notifications are still future work. Read the README and source before claiming a feature is implemented. The app uses the same backend, accounts, reports and official resolutions as the website; Azure and physical-device validation remain environment-specific checks.
 
 ## Mandatory stack and responsibility boundaries
 
@@ -31,7 +31,7 @@ Do not replace the stack or introduce Flutter, Svelte UI, a second backend, a se
 - Keep public configuration in `src/config`; separate future API transport, domain contracts and native adapters from screen rendering. Do not create empty framework layers just to match a diagram.
 - Prefer `View`, `Text`, `Pressable`, list primitives and safe-area-aware layouts. Use platform-specific files only where capabilities genuinely differ.
 - Clean up subscriptions and pending requests. Guard stale assessment results, repeated submissions and unmounted state updates.
-- Use explicit loading, empty, error and retry states. Preserve valid user input on failures. Never turn a failed request into fake success. Login/signup success requires a validated backend response and saved session credential; report publishing is still an explicitly labeled preview.
+- Use explicit loading, empty, error and retry states. Preserve valid user input on failures. Never turn a failed request into fake success. Login/signup success requires a validated backend response and saved session credential; report publishing succeeds only after the server returns the saved post and canonical hazard IDs.
 - Use virtualized lists for growing feeds. Avoid base64 media in application state or database records when file uploads/URIs are available.
 - Orange is the primary brand color. Do not change it to blue. Keep the interface minimal, with readable text, restrained borders and no decorative gradients.
 - Always render the app in the light appearance regardless of the operating system setting. Do not add dark mode or an appearance toggle. Respect safe areas, large text and reduced-motion settings. Give controls accessible names, visible focus in the browser, pressed feedback and at least 48-unit touch targets.
@@ -92,10 +92,11 @@ Current source layout:
 
 ```text
 src/app/                    Entry gate, onboarding, login/register, citizen feed and Home alias, About, root layout
-src/components/             Shared native UI, citizen bottom navigation and report-composer preview
+src/components/             Shared native UI, citizen bottom navigation, map controls and report composer
 src/config/environment.ts   Public backend origin; same server as the website
 src/auth/                   Session contracts/controller/provider and platform-specific storage
-src/lib/                    JSON transport and saved-feed parsing
+src/lib/                    JSON/multipart transport, saved-feed/map parsing and road geometry
+src/reporting/              Evidence picker/uploads, foreground GPS and assessed-draft lifecycle
 src/constants/theme.ts      Fixed orange light-appearance tokens
 src/constants/onboarding.ts Versioned local first-run preference key
 src/components/auth/        Brand mark, onboarding illustrations and local-only account forms
