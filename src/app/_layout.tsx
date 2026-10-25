@@ -2,9 +2,10 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useTheme } from '@/constants/theme';
 import { SessionProvider, useSession } from '@/auth/session-provider';
+import { NotificationProvider } from '@/components/notifications/notification-provider';
 
 export default function RootLayout() {
-  return <SessionProvider><RootNavigator /></SessionProvider>;
+  return <SessionProvider><NotificationProvider><RootNavigator /></NotificationProvider></SessionProvider>;
 }
 
 function RootNavigator() {

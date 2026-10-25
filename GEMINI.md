@@ -8,7 +8,7 @@ SuriOS, from Tagalog *suri* (inspect and analyze), helps communities document pu
 
 Supported assets include roads, bridges and footbridges, drainage and flood canals, streetlights and utility poles, water pipes and hydrants, and telecom/fiber cables. Avoid describing SuriOS solely as road safety or assuming every report concerns pavement.
 
-The mobile repo contains a branded client with real account authentication, persisted sessions, editable public profiles, email/password settings, a saved community feed, hazard map, field reporting and native discussions with reactions, replies, image reposts and sharing. Notifications are still future work. Read the README and source before claiming a feature is implemented. The app uses the same backend, accounts, reports and official resolutions as the website; Azure and physical-device validation remain environment-specific checks.
+The mobile repo contains a branded client with real account authentication, persisted sessions, editable public profiles, email/password settings, a saved community feed, hazard map, field reporting and native discussions with reactions, replies, image reposts and sharing. Saved in-app notifications cover linked-hazard official updates and comments/replies. Phone push notifications remain future work. The inbox requires the matching backend deployment and additive notification migration. Read the README and source before claiming a feature is implemented. The app uses the same backend, accounts, reports and official resolutions as the website; Azure and physical-device validation remain environment-specific checks.
 
 ## Mandatory stack and responsibility boundaries
 
@@ -96,6 +96,7 @@ src/components/             Shared native UI, citizen bottom navigation, map con
 src/components/profile/     Website-matched own profile, saved posts, office details and profile editor
 src/components/settings/    Email preferences, password change and recovery email through shared APIs
 src/components/discussion/  Native evidence, comments/replies, reactions, repost composer and sharing
+src/components/notifications/ Saved inbox, foreground unread badge refresh and read receipts
 src/config/environment.ts   Public backend origin; same server as the website
 src/auth/                   Session contracts/controller/provider and platform-specific storage
 src/lib/                    JSON/multipart transport, saved-feed/map parsing and road geometry
@@ -103,7 +104,7 @@ src/reporting/              Evidence picker/uploads, foreground GPS and assessed
 src/constants/theme.ts      Fixed orange light-appearance tokens
 src/constants/onboarding.ts Versioned local first-run preference key
 src/components/auth/        Brand mark, onboarding illustrations and local-only account forms
-assets/                     Template launcher assets
+assets/                     Orie master/reference, launcher/splash/favicon assets and bundled map resources
 README.md                   Overview and quickstart
 AGENTS.md / GEMINI.md        Contributor and AI-agent instructions
 docs/ARCHITECTURE.md         Current and planned system design

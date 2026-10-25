@@ -2,7 +2,7 @@
 
 ## Implemented system
 
-SuriOS Mobile is an Expo-managed React Native client of the existing SvelteKit backend on Azure. The website and app share accounts, profiles, reports, uploaded evidence, canonical hazards and government updates in the existing PostgreSQL database. The app implements citizen signup/login, secure sessions, profile editing and personal post history, saved feed reads, a live hazard map, camera/library evidence selection, foreground GPS/manual locations, road sections, assessment drafts, publishing and native post/update discussions with reactions, replies, image reposts and sharing.
+SuriOS Mobile is an Expo-managed React Native client of the existing SvelteKit backend on Azure. The website and app share accounts, profiles, reports, uploaded evidence, canonical hazards and government updates in the existing PostgreSQL database. The app implements citizen signup/login, secure sessions, profile editing and personal post history, saved feed reads, a live hazard map, camera/library evidence selection, foreground GPS/manual locations, road sections, assessment drafts, publishing and native post/update discussions with reactions, replies, image reposts, sharing and a saved notification inbox.
 
 The app renders native forms, navigation, cards, buttons and sheets using React Native primitives and shared orange light-only tokens. Expo Router owns protected routes. Only the map canvas runs a bundled local Leaflet document inside a native WebView; browser preview uses a sandboxed iframe with the same document. There is no second backend/database or client-side Gemini integration.
 
@@ -29,6 +29,7 @@ Map tile requests go directly to OpenStreetMap without session headers. Road loo
 | Routing and screens | Expo Router, `src/app` | Entry/onboarding, authentication, protected citizen area, Home alias, Profile, Settings, post/update details and About. Protected links retain their destination during session verification; screen gates hold private data until the account is active. No SQL or AI logic. |
 | Presentation | React Native, `src/components` | Native feed, sheets, evidence/video preview, composer, map controls and bottom navigation; shadcn-like flat surfaces and borders. |
 | Design tokens | `src/constants/theme.ts` | Orange, fixed light appearance, readable surface/text/error/success colors. Device dark mode does not change the theme. |
+| App identity | `app.json`, `assets/brand`, `assets/images` | Orie launcher/adaptive/themed icons, light splash and browser favicon. Native resources require a rebuilt binary; no release identifiers or signing are configured yet. See [APP_BRANDING.md](APP_BRANDING.md). |
 | Account/session | `src/auth` | Validated account contracts, restore/login/logout, approval handling, origin-bound credentials, expiry and race protection. |
 | Native credential storage | Expo SecureStore | Stores the opaque session token; never passwords or full private account objects. |
 | Browser credential storage | Platform `.web` adapter | Tab-scoped sessionStorage; not localStorage or AsyncStorage. |
@@ -37,6 +38,7 @@ Map tile requests go directly to OpenStreetMap without session headers. Road loo
 | Own profile | `src/lib/profile.ts`, `profile-media.ts`, `src/components/profile` | Validate the signed-in account's profile, personal cumulative feed and office statistics; save public name, office fields and multipart photos through the existing API. Profile images are trusted public `/media` URLs. |
 | Discussions | `src/lib/discussion.ts`, `repost-media.ts`, `share-post` adapters, `src/components/discussion` | Validate source/update threads, serialize writes, preserve reply drafts, use idempotent social reposts, render official evidence/history and share public links. |
 | Settings | `src/lib/settings.ts`, `src/components/settings` | Load and save email preference booleans; change passwords and request recovery email with the existing bearer APIs. Validate confirmed responses, keep passwords only in memory and leave website appearance preferences unchanged. |
+| Notifications | `src/lib/notifications.ts`, `src/components/notifications` | Validate saved events, refresh foreground unread counts, paginate the inbox and send owned read receipts. Server transactions determine recipients; no email dependency. |
 | Reporting lifecycle | `src/reporting/report-controller.ts` | In-memory form/draft state, evidence/context invalidation, cancellation/discard, cover mapping and idempotent publication. |
 | Device evidence | Expo ImagePicker / FileSystem | System library and camera, file metadata and URI uploads. No base64 evidence copies in app state. |
 | Device location | Expo Location | Foreground single location fix, permission/timeout handling and manual fallback. No background tracking. |
@@ -127,6 +129,14 @@ Leaflet executable assets are bundled with their license; there is no remote scr
 
 Severity, support and priority remain separate returned values. The app does not add reactions/support to physical severity. Grouped posts refer to a canonical hazard. Its official resolution is read from a linked source post and opens the government explanation/evidence, including when that official update quoted another source in the group. Nearby unrelated hazards stay separate.
 
+## Notification lifecycle
+
+Official updates fan out to distinct authors of active posts linked to the canonical hazard. Comment/reply notifications target the source/update author and parent-comment author, deduplicated and excluding the actor. Event and notification rows commit in one backend transaction. The unique event/recipient key prevents duplicate official notifications on retry; private endpoints scope every read or mutation to the authenticated account.
+
+The mobile provider refreshes the unread count every 30 seconds while foregrounded and on focus. The inbox loads on entry/return or explicit refresh, with stable cursor pagination and stale-response guards. Opening a notification preserves its exact government/social update ID and sends an independent read receipt. Read actions update badges only after confirmed responses. Notification state never changes hazard severity, grouping, support or status.
+
+The additive backend notification migration must be deployed with the API before using this feature on Azure. SMTP is not required. Device push delivery is separate future work. See [NOTIFICATIONS.md](NOTIFICATIONS.md).
+
 ## API and failure boundaries
 
 | Workflow | Existing API | Recovery |
@@ -136,6 +146,7 @@ Severity, support and priority remain separate returned values. The app does not
 | Profile | `/api/profile` GET/POST | Owned profile and personal post history; retained editor input/photos on errors, photo removal flags, session refresh after confirmed saves |
 | Settings and security | `/api/settings` GET/PATCH, `/api/auth/password`, `/api/settings/reset-link` | Retain unsaved choices on failure; acknowledge only validated responses; current session survives password changes, other sessions are revoked server-side; delivery errors remain visible |
 | Discussions | `/api/community/posts/:id`, `/api/community/comments/:id`, `/api/community/reposts` and quote-specific interaction endpoints | Separate source/update state, retained comment input, refresh before ambiguous comment retry, same-UUID repost retries, and refresh feed/profile on return |
+| Notifications | `/api/notifications` GET/PATCH | All/Unread, cursor pagination, owned idempotent reads, explicit unavailable/retry states; account changes clear badge state |
 | Map | `/api/map/reports`, `/api/map/reports/:id` | Last loaded reports, accessible list, direct older-hazard lookup |
 | Nearby roads | `/api/roads?lat=...&lng=...` | Stale/repeated lookup guard, server message, point fallback |
 | Assessment | `/api/community/assess` | Retained files/text, longer timeout, cancellation, reason/evidence on rejection |
@@ -152,6 +163,6 @@ Every EXPO_PUBLIC value is public build configuration. Gemini/DB/SMTP credential
 
 Type/lint checks, browser behavioral tests, real local-backend persistence checks, Expo Doctor and web/Android exports cover different boundaries. Fixture tests use an isolated export/API origin; opt-in reporting integration uses a disposable database, loopback fake Gemini and actual OSM road geometry. Neither a browser test nor an Android JS export proves native execution or creates an APK. See [REPORTING.md](REPORTING.md) and [AUTHENTICATION.md](AUTHENTICATION.md).
 
-Remaining work: physical-device camera/GPS/WebView/video/session and profile/repost photo-picker and device-sharing validation, notifications, launcher artwork, dedicated package identifiers, build/signing configuration and distribution. Government administration remains on the website. Offline drafts, background upload and push notifications are separate future features. Profile contracts, UI and verification are described in [PROFILE.md](PROFILE.md).
+Remaining work: physical-device camera/GPS/WebView/video/session and profile/repost photo-picker and device-sharing and notification acceptance, dedicated package identifiers, build/signing configuration and distribution. Government administration remains on the website. Offline drafts, background upload and push notifications are separate future features. Profile contracts, UI and verification are described in [PROFILE.md](PROFILE.md).
 
 Post/update contracts, evidence, write recovery and static preview routing are documented in [DISCUSSIONS.md](DISCUSSIONS.md).

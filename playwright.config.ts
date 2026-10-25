@@ -12,7 +12,7 @@ export default defineConfig({
   projects: [
     {
       name: "session",
-      testMatch: ["session.spec.ts", "report-controller.spec.ts", "profile-contracts.spec.ts", "settings-contracts.spec.ts", "discussion-contracts.spec.ts"],
+      testMatch: ["session.spec.ts", "report-controller.spec.ts", "profile-contracts.spec.ts", "settings-contracts.spec.ts", "discussion-contracts.spec.ts", "notifications-contracts.spec.ts"],
     },
     {
       name: "browser",
@@ -27,6 +27,8 @@ export default defineConfig({
         "settings-live.spec.ts",
         "discussion.spec.ts",
         "discussion-live.spec.ts",
+        "notifications.spec.ts",
+        "notifications-live.spec.ts",
       ],
       use: {
         browserName: "chromium",
@@ -37,7 +39,8 @@ export default defineConfig({
           process.env.SURIOS_TEST_LIVE === "1" ||
           process.env.SURIOS_TEST_PROFILE_LIVE === "1" ||
           process.env.SURIOS_TEST_SETTINGS_LIVE === "1" ||
-          process.env.SURIOS_TEST_DISCUSSION_LIVE === "1",
+          process.env.SURIOS_TEST_DISCUSSION_LIVE === "1" ||
+          process.env.SURIOS_TEST_NOTIFICATIONS_LIVE === "1",
         trace: "off",
       },
     },
