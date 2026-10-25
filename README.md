@@ -27,6 +27,8 @@ The mobile client connects **accounts, the saved community feed, the hazard map 
 - Real citizen registration and sign-in with the same accounts as the website; government/admin accounts can sign in, with pending/rejected applications held at their approval screen.
 - Native session tokens in Expo SecureStore, browser-preview tokens in tab-scoped sessionStorage, server-validated restoration, expiry handling and logout.
 - Saved citizen posts and official updates, photo previews, cumulative pagination and refresh/retry.
+- Server-backed search, Critical/media/sort filters and Liked posts. Author links open read-only contributor/office profiles inside the feed; your Profile tab remains your account.
+- Owner-only three-dot menus delete source posts or social reposts after confirmation while retaining the canonical hazard and official history.
 - In-app post details and official updates with full evidence, current hazard status, comments/replies, post/comment likes, social reposts with optional images, and device sharing. Feed and profile posts open the same saved discussions as the website.
 - Profile tab and protected `/profile` route with the website's cover/avatar layout, saved personal post history, editable name and photos, and office details/statistics for government accounts. Changes use the existing Azure profile API and refresh the shared account identity.
 - Settings from the profile gear or protected `/settings` route: saved email notification preferences, password changes and reset-link requests through the existing Azure endpoints. Delivery availability and failures are shown honestly; mobile remains light-only.
@@ -51,6 +53,7 @@ Road pavement; bridges and footbridges; drainage and flood canals; streetlights 
 | [Map and reporting](docs/REPORTING.md) | Field workflow, map controls, permissions, draft lifecycle and verification |
 | [Authentication](docs/AUTHENTICATION.md) | Shared account flow, session storage, Azure/local setup, failures and tests |
 | [Profiles](docs/PROFILE.md) | Website-matched profile design, photo/name editing, office details, Azure contracts and verification |
+| [Feed tools](docs/FEED_TOOLS.md) | Search, liked posts, contributor profiles, owned deletion, permissions and verification |
 | [Post details and discussions](docs/DISCUSSIONS.md) | Native threads, official evidence, comments/replies, reactions, reposts, sharing and verification |
 | [App branding](docs/APP_BRANDING.md) | Orie source assets, generation/checking, platform configuration and native rebuild acceptance |
 | [Notifications](docs/NOTIFICATIONS.md) | Saved event inbox, recipient rules, read permissions, deployment and verification |

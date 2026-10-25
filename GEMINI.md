@@ -8,7 +8,7 @@ SuriOS, from Tagalog *suri* (inspect and analyze), helps communities document pu
 
 Supported assets include roads, bridges and footbridges, drainage and flood canals, streetlights and utility poles, water pipes and hydrants, and telecom/fiber cables. Avoid describing SuriOS solely as road safety or assuming every report concerns pavement.
 
-The mobile repo contains a branded client with real account authentication, persisted sessions, editable public profiles, email/password settings, a saved community feed, hazard map, field reporting and native discussions with reactions, replies, image reposts and sharing. Saved in-app notifications cover linked-hazard official updates and comments/replies. Phone push notifications remain future work. The inbox requires the matching backend deployment and additive notification migration. Read the README and source before claiming a feature is implemented. The app uses the same backend, accounts, reports and official resolutions as the website; Azure and physical-device validation remain environment-specific checks.
+The mobile repo contains a branded client with real account authentication, persisted sessions, editable public profiles, email/password settings, a saved searchable community feed, hazard map, field reporting and native discussions with reactions, replies, image reposts and sharing. Saved in-app notifications cover linked-hazard official updates and comments/replies. The feed also supports Critical/media/sort filters, Liked posts, read-only contributor profiles in the feed context and owned source/social-repost deletion. Your Profile tab stays your account. Phone push notifications remain future work. The inbox requires the matching backend deployment and additive notification migration. Read the README and source before claiming a feature is implemented. The app uses the same backend, accounts, reports and official resolutions as the website; Azure and physical-device validation remain environment-specific checks.
 
 ## Mandatory stack and responsibility boundaries
 
@@ -99,7 +99,7 @@ src/components/discussion/  Native evidence, comments/replies, reactions, repost
 src/components/notifications/ Saved inbox, foreground unread badge refresh and read receipts
 src/config/environment.ts   Public backend origin; same server as the website
 src/auth/                   Session contracts/controller/provider and platform-specific storage
-src/lib/                    JSON/multipart transport, saved-feed/map parsing and road geometry
+src/lib/                    JSON/multipart transport, feed queries, owned-deletion/public-profile contracts, map parsing and road geometry
 src/reporting/              Evidence picker/uploads, foreground GPS and assessed-draft lifecycle
 src/constants/theme.ts      Fixed orange light-appearance tokens
 src/constants/onboarding.ts Versioned local first-run preference key

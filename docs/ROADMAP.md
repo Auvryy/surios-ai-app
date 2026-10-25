@@ -22,6 +22,8 @@ Implemented: in-app post/update details, source and update reactions, comments/r
 
 Implemented: saved in-app notifications for official progress/resolution across linked reports and comments/replies, with unread badges, All/Unread filters, owned read receipts and links to native discussions. Backend migration `0014_notifications.sql` must be deployed before using the inbox against Azure. SMTP and phone push are independent. See [NOTIFICATIONS.md](NOTIFICATIONS.md).
 
+Implemented: server-backed search, Critical/media/sort filters, Liked posts, feed-context public citizen/office profiles and confirmed owner-only source/social-repost deletion. Existing backend APIs enforce ownership and preserve canonical hazards/official history. See [FEED_TOOLS.md](FEED_TOOLS.md).
+
 ## Phase 4 — dedicated builds and release validation
 
 Implemented: Orie launcher icon, Android adaptive/themed layers, splash artwork and browser favicon, with validated colors, dimensions and safe margins. See [APP_BRANDING.md](APP_BRANDING.md). Installed launcher/splash acceptance still requires a rebuilt native binary.

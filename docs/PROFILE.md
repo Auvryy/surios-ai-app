@@ -12,12 +12,19 @@ The Profile tab and protected `/profile` route use the existing SuriOS account a
 - Keep the current account's email and sign-out control available. Private account email comes from its authenticated session, not from a public profile response.
 - Reuse existing feed cards, media previews, hazard-map navigation and official-resolution links. Full discussions now open in-app, including reactions, comments/replies and social reposts; see [DISCUSSIONS.md](DISCUSSIONS.md).
 
+## Visiting other contributors
+
+Feed/discussion/comment author links open read-only `/citizen?profile=<uuid>` with Home active. Visitors see public cover/avatar, name, office details/statistics and cumulative post history, with refresh/retry and Back. Private email, Settings, sign-out and edit controls are absent. The Profile tab continues to load your own account; visiting your own public view offers a separate account-profile action. Public identity/ownership is validated. See [FEED_TOOLS.md](FEED_TOOLS.md).
+
+Owned source/social-repost deletion menus refresh personal history/counts after the server confirms removal. Other people’s content and official updates cannot be deleted from this view.
+
 ## Shared Azure contract
 
 The app's existing `EXPO_PUBLIC_API_BASE_URL` points to the same HTTPS backend as the website, normally `https://surios.site`. No new server, database, migration or endpoint is needed.
 
 | Request | Use |
 | --- | --- |
+| `GET /api/profiles/:id?page=N` | Read-only public contributor identity, feed and office statistics. |
 | `GET /api/profile?page=N` | Own public profile, ownership, cumulative feed, total posts, pagination and office statistics. |
 | `POST /api/profile` | Multipart public-name, photo/removal and optional office changes; returns the saved profile identity. |
 | `GET /api/auth/session` | Refresh the account's name/avatar after a confirmed save. |
