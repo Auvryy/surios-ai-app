@@ -60,6 +60,10 @@ export class ReportController {
     ) => FormData,
   ) {}
   getSnapshot = () => this.state;
+  // React development Strict Mode replays effect setup/cleanup on the same instance.
+  activate() {
+    this.disposed = false;
+  }
   subscribe = (listener: () => void) => {
     this.listeners.add(listener);
     return () => {

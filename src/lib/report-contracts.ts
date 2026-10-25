@@ -77,7 +77,7 @@ export function parseAnalysis(value: unknown): Analysis {
     infrastructureType:
       typeof value.infrastructureType === "string"
         ? value.infrastructureType
-        : "OTHER_PUBLIC_INFRASTRUCTURE",
+        : "Public infrastructure",
     distressType: value.distressType,
     hazardSeverity: Number(value.hazardSeverity),
     riskLevel: String(value.riskLevel || ""),

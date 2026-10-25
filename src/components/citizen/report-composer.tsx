@@ -63,6 +63,7 @@ export function ReportComposer({ onClose, onPublished, initialPoint }: Props) {
     selecting = useRef(false);
   useEffect(() => {
     alive.current = true;
+    controller.activate();
     return () => {
       alive.current = false;
       controller.dispose();
