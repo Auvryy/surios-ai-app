@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "expo-router";
 import {
   ActivityIndicator,
   AppState,
@@ -29,6 +30,7 @@ import { useTheme } from "@/constants/theme";
 import { isRecord } from "@/auth/contracts";
 import { ApiError } from "@/lib/api-client";
 import { publicUrl } from "@/lib/feed";
+import { postDestination } from "@/lib/discussion";
 import {
   emptyMapFilters,
   filterHazards,
@@ -57,6 +59,7 @@ export function HazardMap({
 }) {
   const { colors } = useTheme(),
     { request } = useSession();
+  const router = useRouter();
   const [data, setData] = useState<MapSnapshot | null>(null),
     [loading, setLoading] = useState(true),
     [error, setError] = useState("");
@@ -219,9 +222,15 @@ export function HazardMap({
   const openLink = async (path: string) => {
     try {
       setLinkError("");
+      const target = postDestination(path, apiOrigin());
+      if (target) {
+        setSelectedId(""); selectedRef.current = ""; setPanel(null);
+        router.push(target);
+        return;
+      }
       await Linking.openURL(publicUrl(path, apiOrigin()));
     } catch {
-      setLinkError("The website could not open. Please try again.");
+      setLinkError("This link could not open. Please try again.");
     }
   };
   const openResolution = async (hazard: MapHazard) => {

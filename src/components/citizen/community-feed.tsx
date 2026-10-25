@@ -1,7 +1,6 @@
 import Feather from "@expo/vector-icons/Feather";
 import {
   useCallback,
-  useEffect,
   useRef,
   useState,
   type ReactNode,
@@ -16,6 +15,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { useFocusEffect, useRouter } from "expo-router";
 import { apiOrigin } from "@/auth/api";
 import { useSession } from "@/auth/session-provider";
 import { useTheme } from "@/constants/theme";
@@ -29,6 +29,7 @@ import {
 import { Button } from "@/components/ui/controls";
 import { Avatar } from "@/components/ui/avatar";
 import { profileImageUrl } from "@/lib/profile";
+import { postDestination } from "@/lib/discussion";
 import { EvidencePreview, type PreviewMedia } from "./evidence-preview";
 
 export function CommunityFeed({
@@ -76,10 +77,10 @@ export function CommunityFeed({
     },
     [request],
   );
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     void fetchPage(1);
     return () => pending.current?.abort();
-  }, [fetchPage]);
+  }, [fetchPage]));
   const load = (page: number) => {
     setLoading(true);
     setError(null);
@@ -162,8 +163,7 @@ export function CommunityFeed({
             </Pressable>
           )}
           <Text style={[styles.note, { color: colors.muted }]}>
-            Posts come from your SuriOS server. Open a post to view its full
-            discussion and evidence on the website.
+            Open a report to view its full discussion, evidence and official updates.
           </Text>
         </View>
       }
@@ -179,14 +179,17 @@ export function PostCard({
   onMap: (id?: string) => void;
 }) {
   const { colors } = useTheme();
+  const router = useRouter();
   const [linkError, setLinkError] = useState("");
   const [preview, setPreview] = useState<PreviewMedia[] | null>(null);
   const open = async (path: string) => {
     try {
       setLinkError("");
+      const target = postDestination(path, apiOrigin());
+      if (target) { router.push(target); return; }
       await Linking.openURL(publicUrl(path, apiOrigin()));
     } catch {
-      setLinkError("Could not open the website. Please try again.");
+      setLinkError("Could not open this post. Please try again.");
     }
   };
   const resolved = item.status === "RESOLVED";
@@ -336,7 +339,7 @@ export function PostCard({
           Open post
         </Text>
         <Feather
-          name="arrow-up-right"
+          name="arrow-right"
           accessible={false}
           aria-hidden
           size={17}

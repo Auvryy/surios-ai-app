@@ -31,6 +31,7 @@ function RootNavigator() {
           <Stack.Screen name="home" options={{ headerShown: false }} />
           <Stack.Screen name="profile" options={{ headerShown: false }} />
           <Stack.Screen name="settings" options={{ headerShown: false }} />
+          <Stack.Screen name="post/[id]" options={{ headerShown: false }} />
         </Stack.Protected>
         <Stack.Screen name="about" options={{ title: 'About SuriOS' }} />
         <Stack.Screen name="+not-found" options={{ title: 'Page not found' }} />
