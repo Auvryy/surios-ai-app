@@ -14,7 +14,11 @@ The screen uses React Native primitives, orange/light-only tokens, safe areas, 4
 - Native device sharing; browser share/copy when available and a selectable public link as fallback. Shared links use public website URLs; universal/app-link registration is not included.
 - Loading, empty, retry, deleted source, unavailable repost, expired-session and pending-account states. Returning to feed/profile refreshes saved data.
 
-Government update creation, work orders, administration, post deletion, push notifications and offline drafts are outside this feature. Existing government updates can be read, discussed, liked and socially reposted.
+Government update creation, work orders, administration, push notifications and offline drafts are outside this feature. Existing government updates can be read, discussed, liked and socially reposted.
+
+## Author profiles and owned deletion
+
+Author links open read-only contributor profiles within the citizen feed; the Profile tab stays your own account. Three-dot menus on your source posts and social reposts require explicit deletion confirmation and validate the saved receipt. Official updates cannot be deleted. A confirmed source deletion clears its title/body/media even if refresh fails, retaining hazard/status, sibling observations and official history. Social-repost removal returns to its source. Feed/profile histories refresh on return. See [FEED_TOOLS.md](FEED_TOOLS.md).
 
 ## Backend contracts
 
