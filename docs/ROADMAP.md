@@ -20,6 +20,8 @@ Settings now support saved comments/replies and post-like email preferences, pas
 
 Implemented: in-app post/update details, source and update reactions, comments/replies, comment likes, social reposts with optional images and device sharing/browser link fallback. Disposable-backend integration verifies that linked posts show the same official resolution, unrelated hazards remain independent and interactions persist across sessions and website reads. See [DISCUSSIONS.md](DISCUSSIONS.md). Remaining environment acceptance: native sharing, keyboard, media and document handoff on a physical device.
 
+Implemented: saved in-app notifications for official progress/resolution across linked reports and comments/replies, with unread badges, All/Unread filters, owned read receipts and links to native discussions. Backend migration `0014_notifications.sql` must be deployed before using the inbox against Azure. SMTP and phone push are independent. See [NOTIFICATIONS.md](NOTIFICATIONS.md).
+
 ## Phase 4 — dedicated builds and release validation
 
 Replace template launcher artwork, configure Android package/iOS bundle identifiers, EAS project/build profiles and signing. Test a dedicated development APK on Android before a distributable build. Validate permissions, keyboard, safe areas, large text, offline errors, upload recovery and authentication expiry. iOS validation follows when hardware/distribution access is available.

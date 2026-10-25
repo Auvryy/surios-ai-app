@@ -18,7 +18,8 @@ The mobile client connects **accounts, the saved community feed, the hazard map 
 - Three first-run introduction slides, persistent completion, and registration/sign-in interface with SuriOS orange branding.
 - Citizen feed (`/home` and `/citizen`) and About (`/about`) screens are available.
 - Orange light-only appearance regardless of the device theme, safe-area layout and responsive browser preview.
-- Citizen feed with bottom navigation, a center camera/post action, live street map, evidence previews and the connected report composer. Notifications remain a preview.
+- Citizen feed with bottom navigation, a center camera/post action, live street map, evidence previews and the connected report composer. The Updates tab opens a saved notification inbox.
+- Saved in-app notifications for official progress/resolution and comments/replies, with unread badges, All/Unread filters, read actions and native discussion links.
 - File-based navigation and a missing-page screen.
 - Strict TypeScript, linting, reproducible npm lockfile and web/Android bundle commands.
 - Public API-origin configuration for the existing Azure backend.
@@ -33,7 +34,7 @@ The mobile client connects **accounts, the saved community feed, the hazard map 
 
 **Reporting:** camera/library evidence, photos/videos and cover selection, foreground GPS/manual pins, mapped road sections, server AI assessment, draft cancellation and real publishing. The map includes filters, clustering, road lines, source/evidence links and official resolution links.
 
-**Still planned:** notifications and distribution configuration. Discussions use the existing backend, with persistence verified against a disposable local instance. Launcher icons remain Expo placeholders. Azure bearer API and browser login/session/feed/logout were verified at `https://surios.site`; localhost browser origins are now allowlisted. Real-device authentication/storage execution still requires device validation; browser tests and bundle exports do not prove it.
+**Still planned:** phone push notifications and distribution configuration. The in-app inbox requires the matching notifications backend deployment; see [NOTIFICATIONS.md](docs/NOTIFICATIONS.md). Discussions use the existing backend, with persistence verified against a disposable local instance. Launcher icons remain Expo placeholders. Azure bearer API and browser login/session/feed/logout were verified at `https://surios.site`; localhost browser origins are now allowlisted. Real-device authentication/storage execution still requires device validation; browser tests and bundle exports do not prove it.
 
 ### Reporting scope
 
@@ -50,6 +51,7 @@ Road pavement; bridges and footbridges; drainage and flood canals; streetlights 
 | [Authentication](docs/AUTHENTICATION.md) | Shared account flow, session storage, Azure/local setup, failures and tests |
 | [Profiles](docs/PROFILE.md) | Website-matched profile design, photo/name editing, office details, Azure contracts and verification |
 | [Post details and discussions](docs/DISCUSSIONS.md) | Native threads, official evidence, comments/replies, reactions, reposts, sharing and verification |
+| [Notifications](docs/NOTIFICATIONS.md) | Saved event inbox, recipient rules, read permissions, deployment and verification |
 | [Settings](docs/SETTINGS.md) | Email preferences, password changes, recovery email, security boundaries and verification |
 | [Agent quick reference](AGENTS.md) | Seven operating rules, workspace isolation and user-managed branch workflow |
 | [Engineering constitution](GEMINI.md) | Full mobile stack, code, security, UI, assessment and Git instructions |
