@@ -4,11 +4,14 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { ONBOARDING_COMPLETE_KEY } from '@/constants/onboarding';
 import { useTheme } from '@/constants/theme';
+import { useSession } from '@/auth/session-provider';
+import { SessionPanel } from '@/components/auth/session-panel';
 type Destination = '/onboarding' | '/login';
 
 export default function EntryScreen() {
   const [destination, setDestination] = useState<Destination | null>(null);
   const { colors } = useTheme();
+  const { session, status } = useSession();
 
   useEffect(() => {
     let active = true;
@@ -22,6 +25,8 @@ export default function EntryScreen() {
     return () => { active = false; };
   }, []);
 
+  if (status === 'loading' || status === 'unavailable') return <SessionPanel />;
+  if (session) return <Redirect href="/citizen" />;
   if (destination) return <Redirect href={destination} />;
   return <View style={[styles.loading, { backgroundColor: colors.background }]}><ActivityIndicator color={colors.primary} accessibilityLabel="Loading SuriOS" /></View>;
 }

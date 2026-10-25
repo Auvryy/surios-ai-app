@@ -9,10 +9,11 @@ node --version
 npm --version
 git --version
 npm ci
+cp .env.example .env
 npm run web
 ```
 
-Expo prints the development URL, normally localhost:8081. Open `/citizen` to inspect the mobile feed preview directly; the sign-in and registration pages also link to it. To choose a port explicitly:
+Expo prints the development URL, normally localhost:8081. Configure the existing SuriOS backend origin first, then sign in to open `/citizen`. Direct signed-out access is protected. To choose a port explicitly:
 
 ```bash
 npm run web -- --port 8082
@@ -28,16 +29,16 @@ For a desktop window displaying the actual phone, optionally install `scrcpy` an
 
 A dedicated Expo development build will be needed when adding native dependencies unavailable in Expo Go. EAS cloud builds can avoid local Android build tooling; account setup, build profiles and signing will be configured in that phase. Local Android builds need the Android SDK and JDK. Native iOS local builds require macOS/Xcode.
 
-## Future backend origin
+## Backend origin
 
-Copy `.env.example` to `.env` only when needed. Environment files stay ignored; the template is tracked. Restart Expo after changing configuration and rebuild distributed apps to change bundled configuration.
+Copy `.env.example` to `.env` to use the existing Azure backend at `https://surios.site`. A local backend on port 5185 is optional. Environment files stay ignored; the template is tracked. An ignored `.env.local` overrides `.env` for local development. Restart Expo after changing configuration and rebuild distributed apps to change bundled configuration. See [authentication setup](AUTHENTICATION.md).
 
-- Azure: use the real HTTPS backend origin.
+- Azure: use the existing website address and port; HTTP IP addresses work during development, while releases require HTTPS. No additional Azure VM/IP/database is needed.
 - Phone accessing a local server: use your PC's reachable LAN IP and bind the server to the LAN interface.
 - Browser accessing another origin: backend CORS and authentication rules must permit the development origin.
 - Do not assume localhost:5173 works from a phone or that existing web form actions are mobile APIs.
 
-No API requests are currently made, and an absent API URL does not prevent the starter from running.
+Sign-in, registration, session restoration, logout and saved feed reads call the configured backend. Missing configuration or unavailable endpoints display an error and preserve retryable input.
 
 ## Checks and exports
 
@@ -47,6 +48,7 @@ No API requests are currently made, and an absent API URL does not prevent the s
 - `npm run export:web`: static browser build into ignored `dist/`.
 - `npm run export:android`: Android JavaScript bundle, not an APK.
 - `npx expo-doctor`: Expo dependency/configuration diagnostics.
+- `npm run test:auth`: session/transport and browser authentication tests. See [live test prerequisites](AUTHENTICATION.md#verification) before opting into real-backend tests.
 
 Use a physical Android device for camera, GPS, keyboard, permissions and accessibility checks before shipping those features. Browser checks should include narrow phone and tablet/desktop widths, light-only behavior under both system appearance settings, enlarged text and keyboard navigation. The current report composer is preview-only; camera, location selection and publishing are not connected.
 
@@ -66,4 +68,4 @@ Start a new feature from verified current main on the agreed descriptive branch.
 
 The initial SDK 58 install reports five high-severity dependency audit entries involving Expo CLI/code-signing dependencies, `node-forge` and Zod. Some entries are propagation through the same dependency chain. The installed `node-forge` is the latest published version at initialization; npm's suggested automatic fix downgrades Expo to SDK 44 and is not a compatible remediation. Zod is on the version required by the current toolchain; do not force a major override without compatibility testing.
 
-Track upstream fixes and rerun `npm audit` before release. These audit findings remain unresolved; passing Expo Doctor, type checks or bundle exports does not clear them. The current starter makes no authentication, assessment or live backend requests.
+Track upstream fixes and rerun `npm audit` before release. These audit findings remain unresolved; passing Expo Doctor, type checks or bundle exports does not clear them. Current account/feed requests use the existing backend; native assessment is still unimplemented.

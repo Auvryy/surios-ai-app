@@ -1,5 +1,4 @@
 import Feather from '@expo/vector-icons/Feather';
-import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,6 +6,9 @@ import { BrandMark } from '@/components/auth/brand-mark';
 import { CitizenTabBar, type CitizenSection } from '@/components/citizen/citizen-tab-bar';
 import { ReportComposer } from '@/components/citizen/report-composer';
 import { useTheme } from '@/constants/theme';
+import { useSession } from '@/auth/session-provider';
+import { SessionPanel } from '@/components/auth/session-panel';
+import { CommunityFeed } from '@/components/citizen/community-feed';
 
 const infrastructureTypes = ['Roads', 'Bridges', 'Drainage', 'Streetlights', 'Water lines', 'Telecom'];
 
@@ -14,45 +16,46 @@ export default function CitizenScreen() {
   const { colors } = useTheme();
   const [section, setSection] = useState<CitizenSection>('feed');
   const [composerOpen, setComposerOpen] = useState(false);
+  const { session, status } = useSession();
+
+  if (status === 'loading' || status === 'unavailable' || session?.user.accountStatus !== 'ACTIVE') return <SessionPanel />;
+
+  const header = <View style={styles.content}>
+    <CommunityHeader onUpdates={() => setSection('updates')} onMap={() => setSection('map')} />
+    {section === 'feed' && <FeedSection onCreate={() => setComposerOpen(true)} />}
+  </View>;
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.safe, { backgroundColor: colors.background }]}>
       <View style={[styles.shell, { backgroundColor: colors.background }]}>
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        {section === 'feed' ? <CommunityFeed header={header} /> : section === 'profile' ? <SessionPanel profile /> : <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <View style={styles.content}>
-            <View style={styles.header}>
-              <View>
-                <BrandMark />
-                <Text style={[styles.brandCaption, { color: colors.muted }]}>COMMUNITY INFRASTRUCTURE</Text>
-              </View>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Open updates"
-                onPress={() => setSection('updates')}
-                style={({ pressed }) => [styles.notificationButton, { borderColor: colors.border, backgroundColor: colors.surface, opacity: pressed ? 0.75 : 1 }]}
-              >
-                <Feather name="bell" size={20} color={colors.text} />
-              </Pressable>
-            </View>
-
-            <Pressable accessibilityRole="button" accessibilityLabel="View the Santa Cruz hazard map" onPress={() => setSection('map')} style={({ pressed }) => [styles.locationChip, { backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.78 : 1 }]}>
-              <View style={[styles.locationIcon, { backgroundColor: colors.accent }]}><Feather name="map-pin" size={15} color={colors.primary} /></View>
-              <Text style={[styles.locationText, { color: colors.text }]}>Santa Cruz, Laguna</Text>
-              <Feather name="chevron-down" size={16} color={colors.muted} />
-            </Pressable>
-
-            {section === 'feed' && <FeedSection onCreate={() => setComposerOpen(true)} />}
+            {header}
             {section === 'map' && <MapSection onCreate={() => setComposerOpen(true)} />}
             {section === 'updates' && <UpdatesSection />}
-            {section === 'profile' && <ProfileSection onSignIn={() => router.push('/login')} />}
           </View>
-        </ScrollView>
+        </ScrollView>}
 
         <CitizenTabBar active={section} onChange={setSection} onCreate={() => setComposerOpen(true)} />
         <ReportComposer visible={composerOpen} onClose={() => setComposerOpen(false)} />
       </View>
     </SafeAreaView>
   );
+}
+
+function CommunityHeader({ onUpdates, onMap }: { onUpdates: () => void; onMap: () => void }) {
+  const { colors } = useTheme();
+  return <>
+    <View style={styles.header}>
+      <View><BrandMark /><Text style={[styles.brandCaption, { color: colors.muted }]}>COMMUNITY INFRASTRUCTURE</Text></View>
+      <Pressable accessibilityRole="button" accessibilityLabel="Open updates" onPress={onUpdates} style={({ pressed }) => [styles.notificationButton, { borderColor: colors.border, backgroundColor: colors.surface, opacity: pressed ? 0.75 : 1 }]}><Feather name="bell" size={20} color={colors.text} /></Pressable>
+    </View>
+    <Pressable accessibilityRole="button" accessibilityLabel="View the Santa Cruz hazard map" onPress={onMap} style={({ pressed }) => [styles.locationChip, { backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.78 : 1 }]}>
+      <View style={[styles.locationIcon, { backgroundColor: colors.accent }]}><Feather name="map-pin" size={15} color={colors.primary} /></View>
+      <Text style={[styles.locationText, { color: colors.text }]}>Santa Cruz, Laguna</Text>
+      <Feather name="chevron-down" size={16} color={colors.muted} />
+    </Pressable>
+  </>;
 }
 
 function FeedSection({ onCreate }: { onCreate: () => void }) {
@@ -79,17 +82,7 @@ function FeedSection({ onCreate }: { onCreate: () => void }) {
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Community updates</Text>
           <Text style={[styles.sectionSubtitle, { color: colors.muted }]}>Reports and public responses</Text>
         </View>
-        <View style={[styles.previewBadge, { backgroundColor: colors.accent }]}><Text style={[styles.previewText, { color: colors.primary }]}>PREVIEW</Text></View>
-      </View>
-
-      <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <MapIllustration />
-        <Text style={[styles.emptyTitle, { color: colors.text }]}>Your local feed starts here</Text>
-        <Text style={[styles.emptyBody, { color: colors.muted }]}>The mobile preview is not connected to live posts yet. Once connected, you’ll see community reports and official updates here.</Text>
-        <Pressable accessibilityRole="button" onPress={onCreate} style={({ pressed }) => [styles.emptyButton, { backgroundColor: colors.primary, opacity: pressed ? 0.82 : 1 }]}>
-          <Feather name="plus" size={18} color={colors.onPrimary} />
-          <Text style={[styles.emptyButtonText, { color: colors.onPrimary }]}>Start a report</Text>
-        </Pressable>
+        <View style={[styles.previewBadge, { backgroundColor: colors.accent }]}><Text style={[styles.previewText, { color: colors.primary }]}>LIVE</Text></View>
       </View>
 
       <View style={styles.typesBlock}>
@@ -99,7 +92,6 @@ function FeedSection({ onCreate }: { onCreate: () => void }) {
         </View>
       </View>
 
-      <PreviewNote />
     </View>
   );
 }
@@ -146,29 +138,6 @@ function UpdatesSection() {
   );
 }
 
-function ProfileSection({ onSignIn }: { onSignIn: () => void }) {
-  const { colors } = useTheme();
-  return (
-    <View style={styles.section}>
-      <View style={styles.headingBlock}>
-        <Text style={[styles.eyebrow, { color: colors.primary }]}>YOUR SPACE</Text>
-        <Text accessibilityRole="header" style={[styles.pageTitle, { color: colors.text }]}>Profile</Text>
-        <Text style={[styles.body, { color: colors.muted }]}>Manage your account and the reports you share.</Text>
-      </View>
-      <View style={[styles.profileCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <View style={[styles.profileIcon, { backgroundColor: colors.accent }]}><Feather name="user" size={24} color={colors.primary} /></View>
-        <Text style={[styles.emptyTitle, { color: colors.text }]}>Sign in to your account</Text>
-        <Text style={[styles.emptyBody, { color: colors.muted }]}>Account access is not connected in this mobile preview yet.</Text>
-        <Pressable accessibilityRole="button" onPress={onSignIn} style={({ pressed }) => [styles.emptyButton, { backgroundColor: colors.primary, opacity: pressed ? 0.82 : 1 }]}>
-          <Text style={[styles.emptyButtonText, { color: colors.onPrimary }]}>Open sign in</Text>
-          <Feather name="arrow-right" size={17} color={colors.onPrimary} />
-        </Pressable>
-      </View>
-      <PreviewNote />
-    </View>
-  );
-}
-
 function EmptySectionCard({ icon, title, body }: { icon: 'bell' | 'message-circle'; title: string; body: string }) {
   const { colors } = useTheme();
   return (
@@ -185,7 +154,7 @@ function PreviewNote() {
   return (
     <View style={[styles.previewNote, { borderColor: colors.border }]}>
       <Feather name="info" size={15} color={colors.muted} />
-      <Text style={[styles.previewNoteText, { color: colors.muted }]}>Preview only · Live posts, maps and account data are not connected yet.</Text>
+      <Text style={[styles.previewNoteText, { color: colors.muted }]}>This feature is a preview. Map tools, notifications and publishing are not connected yet.</Text>
     </View>
   );
 }

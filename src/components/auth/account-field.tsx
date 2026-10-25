@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useState, type Ref } from 'react';
+import { Pressable, StyleSheet, Text, TextInput, View, type TextInputInstance } from 'react-native';
 import { useTheme } from '@/constants/theme';
 
 export type AccountFieldName = 'name' | 'email' | 'password' | 'confirmPassword';
@@ -13,11 +13,13 @@ type Props = {
   autoCapitalize?: 'none' | 'words';
   keyboardType?: 'default' | 'email-address';
   secure?: boolean;
+  disabled?: boolean;
+  ref?: Ref<TextInputInstance>;
   onChangeText: (value: string) => void;
   onSubmitEditing?: () => void;
 };
 
-export function AccountField(props: Props) {
+export function AccountField({ ref, ...props }: Props) {
   const { colors } = useTheme();
   const [visible, setVisible] = useState(false);
   const labelId = `${props.name}-label`;
@@ -29,7 +31,9 @@ export function AccountField(props: Props) {
       </View>
       <View style={[styles.inputWrap, { backgroundColor: colors.surface, borderColor: props.error ? '#DC2626' : colors.border }]}>
         <TextInput
+          ref={ref}
           accessibilityLabel={props.label}
+          editable={!props.disabled}
           accessibilityHint={props.error || props.hint}
           aria-invalid={!!props.error}
           aria-labelledby={labelId}
@@ -45,6 +49,7 @@ export function AccountField(props: Props) {
           style={[styles.input, { color: colors.text }]}
           textContentType={props.name === 'name' ? 'name' : props.name === 'email' ? 'emailAddress' : props.name === 'password' ? (props.isRegister ? 'newPassword' : 'password') : 'newPassword'}
           value={props.value}
+          maxLength={props.name === 'name' ? 120 : props.name === 'email' ? 254 : 256}
         />
         {props.secure ? <Pressable accessibilityRole="button" accessibilityLabel={visible ? `Hide ${props.label.toLowerCase()}` : `Show ${props.label.toLowerCase()}`} onPress={() => setVisible((current) => !current)} hitSlop={10} style={styles.showButton}><Text style={[styles.showText, { color: colors.muted }]}>{visible ? 'Hide' : 'Show'}</Text></Pressable> : null}
       </View>
