@@ -10,6 +10,8 @@
     "primaryColor": "#C93D00",
     "ios": {},
     "android": {
+      "package": "site.surios.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#C93D00",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -54,6 +56,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "2476c458-db69-4066-a4cf-95637a4c005e"
+      }
+    },
+    "owner": "auvy"
   }
 }
