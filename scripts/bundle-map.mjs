@@ -22,6 +22,11 @@ await writeFile(
 );
 await writeFile(
   new URL("LEAFLET-LICENSE.txt", output),
-  await readFile(new URL("../node_modules/leaflet/LICENSE", import.meta.url)),
+  (
+    await readFile(
+      new URL("../node_modules/leaflet/LICENSE", import.meta.url),
+      "utf8",
+    )
+  ).replaceAll("\r\n", "\n"),
 );
 console.log(`Bundled Leaflet ${pkg.version} with its license.`);
