@@ -87,7 +87,7 @@ async function login(page: Page) {
   await page.getByRole("textbox", { name: "Email address" }).fill("demo-alex@example.test");
   await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Community feed", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Start a community infrastructure report", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Profile", exact: true }).click();
 }
 async function edit(page: Page) {

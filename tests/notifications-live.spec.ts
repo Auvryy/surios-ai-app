@@ -12,7 +12,7 @@ async function inbox(api: APIRequestContext) { const r = await api.get("/api/not
 async function login(page: Page) {
   await page.goto("/login"); await page.getByRole("textbox", { name: "Email address" }).fill(seed.accounts.alice.email);
   await page.getByLabel("Password", { exact: true }).fill(password); await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Community feed", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Start a community infrastructure report", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Updates", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Notifications", exact: true })).toBeVisible();
 }

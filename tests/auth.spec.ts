@@ -137,7 +137,7 @@ test('a revoked saved session clears credentials and requests a fresh sign-in', 
     return false;
   });
   await login(page);
-  await expect(page.getByText('Community feed', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Start a community infrastructure report', exact: true })).toBeVisible();
   await page.reload();
   await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible();
   await expect(page.getByRole('alert')).toContainText('session has ended');
@@ -151,7 +151,7 @@ test('an offline saved session offers retry and keeps the credential until verif
     return false;
   });
   await login(page);
-  await expect(page.getByText('Community feed', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Start a community infrastructure report', exact: true })).toBeVisible();
   offline = true;
   await page.reload();
   await expect(page.getByText('Let’s reconnect', { exact: true })).toBeVisible();

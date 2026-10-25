@@ -6,7 +6,7 @@ import { ApiError } from "../lib/api-client";
 import { appendUpload } from "../lib/upload-file";
 import type { Attachment } from "./contracts";
 
-export async function chooseEvidence(camera: boolean): Promise<Attachment[]> {
+export async function chooseEvidence(camera: boolean, kind: "all" | "photo" | "video" = "all"): Promise<Attachment[]> {
   if (camera && Platform.OS !== "web") {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted)
@@ -15,7 +15,7 @@ export async function chooseEvidence(camera: boolean): Promise<Attachment[]> {
       );
   }
   const options: ImagePicker.ImagePickerOptions = {
-    mediaTypes: camera ? ["images"] : ["images", "videos"],
+    mediaTypes: camera || kind === "photo" ? ["images"] : kind === "video" ? ["videos"] : ["images", "videos"],
     quality: 0.85,
     allowsMultipleSelection: !camera,
     selectionLimit: 6,

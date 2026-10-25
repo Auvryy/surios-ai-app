@@ -25,6 +25,7 @@ import { AssessmentDetails } from "@/components/map/assessment-details";
 import type { Coordinate } from "@/lib/roads";
 import type { PublishedReport } from "@/lib/report-contracts";
 import { ReportController } from "@/reporting/report-controller";
+import type { Attachment } from "@/reporting/contracts";
 import { assessmentForm, chooseEvidence } from "@/reporting/media";
 import {
   EvidencePreview,
@@ -36,12 +37,14 @@ type Props = {
   onClose: () => void;
   onPublished: (report: PublishedReport) => void;
   initialPoint?: Coordinate;
+  initialAttachments?: Attachment[];
 };
-export function ReportComposer({ onClose, onPublished, initialPoint }: Props) {
+export function ReportComposer({ onClose, onPublished, initialPoint, initialAttachments }: Props) {
   const { colors } = useTheme(),
     { request, session } = useSession();
   const [controller] = useState(() => {
     const result = new ReportController(request, randomUUID, assessmentForm);
+    if (initialAttachments?.length) result.add(initialAttachments);
     if (initialPoint)
       result.setLocation({
         mode: "point",

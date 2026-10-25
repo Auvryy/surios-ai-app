@@ -13,7 +13,7 @@ async function signIn(page: Page) {
   await page.getByRole("textbox", { name: "Email address" }).fill(seed.accounts.alice.email);
   await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Community feed", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Start a community infrastructure report", exact: true })).toBeVisible();
 }
 async function thread(api: APIRequestContext, id: string) { const response = await api.get(`/api/community/posts/${id}`); expect(response.status()).toBe(200); return response.json(); }
 test.beforeAll(async ({ playwright }) => {
