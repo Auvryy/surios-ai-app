@@ -14,7 +14,9 @@ The `preview` profile in [eas.json](../eas.json) builds a signed, installable AP
 | API origin | `https://surios.site`, supplied as public build configuration |
 | Signing | EAS-managed Android credentials, configured during the first build |
 
-This checkout is linked to [@auvy/surios-ai-app](https://expo.dev/accounts/auvy/projects/surios-ai-app). The cloud build must finish before an APK exists. Store submission and iOS distribution are separate work. Keep the package identity and signing key consistent for subsequent updates.
+This checkout is linked to [@auvy/surios-ai-app](https://expo.dev/accounts/auvy/projects/surios-ai-app). The first signed preview APK completed successfully on 2026-10-25: [build 3299612b](https://expo.dev/accounts/auvy/projects/surios-ai-app/builds/3299612b-df22-4f63-b3fc-71e879981ab7), from commit `db848e0`. The downloaded APK is 94,210,328 bytes with SHA-256 `42b61a61a3196311ba54ca2ae6509fbc6343def8be83f8f74e8283e7a04b6733`. Its local path is ignored `artifacts/apk/SuriOS.apk`.
+
+The APK is installed on the connected Android 16 phone. Android reports package `site.surios.app`, version `1.0.0` / `1`, without the debuggable flag. Cold launch reached the light SuriOS onboarding screen in about 1.5 seconds, and Android App info showed the orange Orie icon and SuriOS name. The app's startup error log was empty. The APK contains its own JavaScript bundle and the Azure HTTPS origin. Full signed-in camera/GPS/map and splash acceptance remain separate checks. Store submission and iOS distribution are separate work. Keep the package identity and signing key consistent for subsequent updates.
 
 ## First cloud build
 
@@ -50,6 +52,12 @@ When EAS reports a successful build, download the APK from its build page into i
 ```bash
 adb install -r artifacts/apk/SuriOS.apk
 adb shell am start -n site.surios.app/.MainActivity
+```
+
+If Android returns `INSTALL_FAILED_USER_RESTRICTED`, unlock the phone, enable **Install via USB** in Developer options where available, and approve its installation prompt. Alternatively, copy the APK to the phone's Downloads and open it in the file manager, approving Android's installation permission for that source:
+
+```bash
+adb push artifacts/apk/SuriOS.apk /sdcard/Download/SuriOS.apk
 ```
 
 The launcher should show **SuriOS** and Orie. Sign in using the same website account; Expo Go's local session is separate and is not copied into this installation. No Azure reseed, migration or new server is needed for packaging the current client.
