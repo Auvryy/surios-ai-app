@@ -1,6 +1,6 @@
 import Feather from "@expo/vector-icons/Feather";
-import { useRouter } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, Image, Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import type { SessionUser } from "@/auth/contracts";
 import { apiOrigin } from "@/auth/api";
@@ -55,10 +55,10 @@ export function ProfileScreen({ user, onBack, onCreate, onMap, onChanged }: {
     setLoading(true); setError("");
     void fetchPage(page);
   };
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     mounted.current = true; void fetchPage(1);
     return () => { mounted.current = false; pending.current?.abort(); };
-  }, [fetchPage]);
+  }, [fetchPage]));
 
   const save = async (changes: ProfileChanges) => {
     if (updating.current) throw new ApiError("A profile update is already in progress.");

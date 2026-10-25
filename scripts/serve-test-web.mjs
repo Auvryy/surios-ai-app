@@ -27,6 +27,9 @@ const server = createServer(async (request, response) => {
       path = resolve(path, "index.html");
     if (!(await stat(path).catch(() => null))?.isFile() && !extname(path))
       path += ".html";
+    // Expo exports dynamic route templates; serve that template on a direct post link.
+    if (!(await stat(path).catch(() => null))?.isFile() && /^\/post\/[^/]+$/.test(url.pathname))
+      path = resolve(root, "post/[id].html");
     const body = await readFile(path);
     response.writeHead(200, {
       "Content-Type": types[extname(path)] || "application/octet-stream",

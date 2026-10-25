@@ -1,4 +1,5 @@
 import { test, expect, type Page, type Route } from "@playwright/test";
+import { source as discussionSource, official as discussionUpdate, postId as discussionPostId, siblingId, quoteId } from "./discussion-data";
 const origin = process.env.SURIOS_TEST_API_ORIGIN || "http://127.0.0.1:5185";
 const user = {
   id: "demo-citizen",
@@ -927,6 +928,24 @@ test("a resolved hazard opens the linked government explanation rather than anot
     `${origin}/community/post/source-two?repost=official-resolution#repost-official-resolution`,
   );
   await opened.close();
+});
+test("valid map resolution links close the map sheet and open the native linked update", async ({ page }) => {
+  await setup(page, async (route, path) => {
+    if (path === "/api/map/reports") {
+      await json(route, { hazards: [hazard("drain", { status: "RESOLVED", posts: [{ ...hazard().posts[0], id: discussionPostId }] })], asOf: "2026-10-25T00:00:00Z" }); return true;
+    }
+    if (path === `/api/community/posts/${discussionPostId}` || path === `/api/community/posts/${siblingId}`) {
+      await json(route, { post: discussionSource(path.endsWith(siblingId) ? siblingId : discussionPostId), reposts: [discussionUpdate()] }); return true;
+    }
+    return false;
+  });
+  await page.getByRole("button", { name: "Map", exact: true }).click();
+  await page.getByRole("button", { name: "Reports · 1", exact: true }).click();
+  await page.getByRole("button", { name: "Open hazard: Demo drain report", exact: true }).click();
+  await page.getByRole("button", { name: "View official resolution", exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`/post/${siblingId}\\?repost=${quoteId}`));
+  await expect(page.getByText("Demo official repair progress and evidence.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Close Demo drain report", exact: true })).toHaveCount(0);
 });
 test("feed deep links also load a hazard outside the latest map snapshot", async ({
   page,
