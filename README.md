@@ -33,6 +33,8 @@ The mobile client connects **accounts, the saved community feed, the hazard map 
 - Profile tab and protected `/profile` route with the website's cover/avatar layout, saved personal post history, editable name and photos, and office details/statistics for government accounts. Changes use the existing Azure profile API and refresh the shared account identity.
 - Settings from the profile gear or protected `/settings` route: saved email notification preferences, password changes and reset-link requests through the existing Azure endpoints. Delivery availability and failures are shown honestly; mobile remains light-only.
 
+**Home interactions:** post cards show like/comment counts and a comment preview. Like directly, expand recent comments to write or react, or tap the post title, body, or empty card space to open the full discussion. An uncertain comment send requires refreshing before another attempt. Native success announcements use supported Android accessibility properties.
+
 **First run:** intro completion is stored locally on the device. New users see three introduction slides; the last step and Skip open registration. A valid restored session opens the citizen feed. Otherwise returning users see sign-in. New citizen accounts require email verification before sign-in; existing accounts remain valid.
 
 **Reporting:** camera/library evidence, photos/videos and cover selection, foreground GPS/manual pins, mapped road sections, server AI assessment, draft cancellation and real publishing. The map includes filters, clustering, road lines, source/evidence links and official resolution links.
