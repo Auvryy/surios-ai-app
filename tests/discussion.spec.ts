@@ -867,3 +867,23 @@ test("Home likes and inline comments save without opening details", async ({ pag
   await page.getByRole("link", { name: "Open post card", exact: true }).first().click({ position: { x: 5, y: 5 } });
   await expect(page).toHaveURL(new RegExp(`/post/${postId}`));
 });
+
+test("Home requires refresh before retrying an uncertain saved comment", async ({ page }) => {
+  const model = await fixture(page, { handle: async (route, path, state) => {
+    if (route.request().method() === "POST" && path === `/api/community/posts/${postId}` && route.request().postDataJSON().action === "comment") {
+      state.post.comments.push({ ...comment(999, "Uncertain Home comment", null), author: user });
+      await route.abort(); return true;
+    }
+    return false;
+  }});
+  await authenticate(page);
+  await page.getByRole("button", { name: /^Comments ·/ }).first().click();
+  await page.getByRole("textbox", { name: "Write a comment", exact: true }).fill("Uncertain Home comment");
+  await page.getByRole("button", { name: "Send comment", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("Refresh the discussion");
+  await expect(page.getByRole("button", { name: "Send comment", exact: true })).toBeDisabled();
+  await page.getByRole("button", { name: "Refresh reactions", exact: true }).click();
+  await expect(page.getByText("Uncertain Home comment", { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "Write a comment", exact: true })).toHaveValue("Uncertain Home comment");
+  expect(model.post.comments.filter(c => c.body === "Uncertain Home comment")).toHaveLength(1);
+});

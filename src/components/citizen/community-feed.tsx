@@ -228,12 +228,12 @@ export function PostCard({
         { borderColor: colors.border, backgroundColor: colors.surface },
       ]}
     >
-      <View style={styles.authorRow}>
+      <View pointerEvents="box-none" style={styles.authorRow}>
         <Pressable accessibilityRole="link" accessibilityLabel={`View profile of ${item.author}`}
           disabled={!validId(item.authorId)} onPress={() => { if (item.authorId) router.push(contributorDestination(item.authorId)); }}
           style={({ pressed }) => [{ flex: 1, minWidth: 0, minHeight: 48, flexDirection: "row", alignItems: "center", gap: 10, opacity: pressed ? 0.7 : 1 }]}>
         <Avatar name={item.author} uri={profileImageUrl(item.authorAvatarUrl, apiOrigin())} size={42} />
-        <View style={styles.authorCopy}>
+        <View pointerEvents="box-none" style={styles.authorCopy}>
           <Text style={[styles.author, { color: colors.text }]}>
             {item.author}
           </Text>
@@ -304,7 +304,7 @@ export function PostCard({
       <PostGallery key={`${item.id}:${item.coverId}`} media={item.media} coverId={item.coverId} point={item.point} roadSegment={item.roadSegment} title={item.title}
         onMap={item.reportId ? () => onMap(item.reportId!) : undefined} />
       {item.originalTitle && (
-        <View style={[styles.quote, { borderColor: colors.border }]}>
+        <View pointerEvents="box-none" style={[styles.quote, { borderColor: colors.border }]}>
           <Text style={[styles.meta, { color: colors.muted }]}>
             Original report
           </Text>
