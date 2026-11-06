@@ -33,6 +33,7 @@ import { PostGallery } from "./post-gallery";
 import { feedRequest, type FeedQuery } from "@/lib/feed-filters";
 import { FeedControls } from "./feed-controls";
 import { PostMenu } from "./post-menu";
+import { FeedInteractions } from "./feed-interactions";
 
 export function CommunityFeed({
   header,
@@ -218,7 +219,10 @@ export function PostCard({
       : "Reported";
   if (removed) return null;
   return (
-    <View
+    <Pressable
+      accessibilityRole="link"
+      accessibilityLabel="Open post card"
+      onPress={(event) => { if (event.target === event.currentTarget) void open(item.url); }}
       style={[
         styles.card,
         { borderColor: colors.border, backgroundColor: colors.surface },
@@ -287,12 +291,13 @@ export function PostCard({
       </Pressable>
       <Text
         accessibilityRole="header"
+        onPress={() => void open(item.url)}
         style={[styles.title, { color: colors.text }]}
       >
         {item.title}
       </Text>
       {!!item.body && (
-        <Text style={[styles.body, { color: colors.text }]} numberOfLines={5}>
+        <Text onPress={() => void open(item.url)} style={[styles.body, { color: colors.text }]} numberOfLines={5}>
           {item.body}
         </Text>
       )}
@@ -320,6 +325,7 @@ export function PostCard({
           onPress={() => onMap(item.reportId!)}
         />
       )}
+      <FeedInteractions item={item} onOpen={() => void open(item.url)} />
       <Pressable
         accessibilityRole="link"
         accessibilityLabel="Open post"
@@ -348,7 +354,7 @@ export function PostCard({
           {linkError}
         </Text>
       )}
-    </View>
+    </Pressable>
   );
 }
 

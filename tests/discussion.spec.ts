@@ -848,3 +848,22 @@ test("320px, phone, landscape and enlarged text keep discussions usable and ligh
     page.getByText("Demo accessible comment", { exact: true }),
   ).toBeVisible();
 });
+
+test("Home likes and inline comments save without opening details", async ({ page }) => {
+  const model = await fixture(page);
+  await authenticate(page);
+  const like = page.getByRole("button", { name: /^Like ·/ }).first();
+  await expect(like).toBeEnabled();
+  await like.click();
+  await expect(page.getByRole("button", { name: "Liked · 1", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: /^Comments ·/ }).first().click();
+  await page.getByRole("textbox", { name: "Write a comment", exact: true }).fill("Home discussion regression");
+  await page.getByRole("button", { name: "Send comment", exact: true }).click();
+  await expect(page.getByText("Home discussion regression", { exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/citizen|\/home/);
+  expect(model.post.comments.some(c => c.body === "Home discussion regression")).toBe(true);
+  await page.getByRole("button", { name: /^Like comment ·/ }).last().click();
+  await expect(page.getByRole("button", { name: "Liked · 1", exact: true })).toHaveCount(2);
+  await page.getByRole("link", { name: "Open post card", exact: true }).first().click({ position: { x: 5, y: 5 } });
+  await expect(page).toHaveURL(new RegExp(`/post/${postId}`));
+});
