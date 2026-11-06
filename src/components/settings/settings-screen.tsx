@@ -1,9 +1,12 @@
 import Feather from "@expo/vector-icons/Feather";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View, type TextInputInstance } from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, type TextInputInstance } from "react-native";
 import { useSession } from "@/auth/session-provider";
+import { authApi } from "@/auth/api";
 import { Button, Notice, ui } from "@/components/ui/controls";
 import { useTheme } from "@/constants/theme";
+import { OtpCodeInput } from "@/components/auth/otp-code-input";
+import { normalizeOtpCode } from "@/auth/otp-code";
 import { ApiError } from "@/lib/api-client";
 import { confirmedMessage, parseSettings, passwordChangeError, type AccountSettings, type EmailPreferences } from "@/lib/settings";
 import { PasswordField } from "./password-field";
@@ -13,7 +16,7 @@ type Feedback = { error?: string; message?: string };
 
 export function SettingsScreen({ onBack }: { onBack: () => void }) {
   const { colors } = useTheme();
-  const { request } = useSession();
+  const { request, signOut } = useSession();
   const [data, setData] = useState<AccountSettings | null>(null);
   const [draft, setDraft] = useState<EmailPreferences | null>(null);
   const [loading, setLoading] = useState(true);
@@ -21,6 +24,11 @@ export function SettingsScreen({ onBack }: { onBack: () => void }) {
   const [active, setActive] = useState<Operation | null>(null);
   const [feedback, setFeedback] = useState<Record<Operation, Feedback>>({ preferences: {}, password: {}, recovery: {} });
   const [passwordOpen, setPasswordOpen] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetCode, setResetCode] = useState("");
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetPasswordConfirm, setResetPasswordConfirm] = useState("");
+  const [resetNotice, setResetNotice] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -88,8 +96,34 @@ export function SettingsScreen({ onBack }: { onBack: () => void }) {
     try {
       const message = confirmedMessage(await request("/api/settings/reset-link", { method: "POST" }), "message");
       status("recovery", { message });
+      setResetCode(""); setResetNotice(message); setResetOpen(true);
     } catch (cause) {
-      status("recovery", { error: cause instanceof ApiError ? cause.message : "Your reset link could not be requested. Please try again." });
+      status("recovery", { error: cause instanceof ApiError ? cause.message : "Your reset code could not be requested. Please try again." });
+    } finally { finish(); }
+  };
+  const resendResetCode = async () => {
+    if (!data?.mailAvailable || !begin("recovery")) return;
+    try {
+      const message = confirmedMessage(await request("/api/settings/reset-link", { method: "POST" }), "message");
+      setResetNotice(message);
+    } catch (cause) {
+      setResetNotice(cause instanceof ApiError ? cause.message : "A new reset code could not be requested. Please try again.");
+    } finally { finish(); }
+  };
+  const confirmResetCode = async () => {
+    if (!data || operation.current) return;
+    const code = normalizeOtpCode(resetCode);
+    if (!/^\d{6}$/.test(code)) { setResetNotice("Enter the 6-digit code from your email."); return; }
+    if (resetPassword.length < 8 || resetPassword.length > 128) { setResetNotice("Use a password between 8 and 128 characters."); return; }
+    if (resetPassword !== resetPasswordConfirm) { setResetNotice("The passwords do not match."); return; }
+    if (!begin("recovery")) return;
+    try {
+      const message = await authApi.resetPasswordWithCode({ email: data.email, code, newPassword: resetPassword, confirmPassword: resetPasswordConfirm }, new AbortController().signal);
+      setResetOpen(false); setResetCode(""); setResetPassword(""); setResetPasswordConfirm("");
+      status("recovery", { message });
+      await signOut();
+    } catch (cause) {
+      setResetNotice(cause instanceof ApiError ? cause.message : "Your password could not be reset. Please try again.");
     } finally { finish(); }
   };
   const locked = active !== null;
@@ -140,13 +174,33 @@ export function SettingsScreen({ onBack }: { onBack: () => void }) {
           </View>}
           <View style={[styles.recovery, { borderTopColor: colors.border }]}>
             <Text style={[ui.label, { color: colors.text }]}>Reset password by email</Text>
-            <Text style={[ui.caption, { color: colors.muted }]}>Forgot your current password? Request a secure reset link.</Text>
-            <Button label={active === "recovery" ? "Sending…" : "Email reset link"} busy={active === "recovery"} disabled={locked || !data.mailAvailable} onPress={() => void resetLink()} />
+            <Text style={[ui.caption, { color: colors.muted }]}>Forgot your current password? Request a 6-digit reset code.</Text>
+            <Button label={active === "recovery" ? "Sending…" : "Email reset code"} busy={active === "recovery"} disabled={locked || !data.mailAvailable} onPress={() => void resetLink()} />
             {response("recovery")}
           </View>
         </View>
       </>}
     </ScrollView>
+    <Modal visible={resetOpen} transparent animationType="fade" onRequestClose={() => setResetOpen(false)}>
+      <View style={styles.modalBackdrop}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.modalKeyboard}>
+          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.modalScroll}>
+            <View style={[styles.modalCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Text accessibilityRole="header" style={[ui.heading, { color: colors.text }]}>Reset password</Text>
+              <Text style={[ui.caption, { color: colors.muted }]}>Enter the code sent to {data?.email}, then choose a new password.</Text>
+              <Text style={[ui.label, { color: colors.text }]}>Email code</Text>
+              <OtpCodeInput accessibilityLabel="Password reset code" value={resetCode} onChangeText={(value) => { setResetCode(value); setResetNotice(""); }} disabled={locked} />
+              <PasswordField label="New password" value={resetPassword} onChangeText={setResetPassword} disabled={locked} />
+              <PasswordField label="Confirm new password" value={resetPasswordConfirm} onChangeText={setResetPasswordConfirm} disabled={locked} />
+              {!!resetNotice && <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={[ui.caption, { color: resetNotice.startsWith("If an account") ? colors.primary : colors.error }]}>{resetNotice}</Text>}
+              <Button label={active === "recovery" ? "Resetting…" : "Reset password"} busy={active === "recovery"} disabled={locked} onPress={() => void confirmResetCode()} />
+              <Button label={active === "recovery" ? "Sending…" : "Resend code"} variant="outline" busy={active === "recovery"} disabled={locked || !data?.mailAvailable} onPress={() => void resendResetCode()} />
+              <Pressable accessibilityRole="button" disabled={locked} onPress={() => setResetOpen(false)} style={styles.modalClose}><Text style={[ui.body, { color: colors.muted }]}>Close</Text></Pressable>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </View>
+    </Modal>
   </KeyboardAvoidingView>;
 }
 
@@ -174,4 +228,8 @@ const styles = StyleSheet.create({
   checkbox: { width: 22, height: 22, borderRadius: 5, borderWidth: 1, alignItems: "center", justifyContent: "center" },
   disclosure: { minHeight: 48, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
   recovery: { borderTopWidth: 1, paddingTop: 16, gap: 10 },
+  modalBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.62)", justifyContent: "center", padding: 18 },
+  modalKeyboard: { width: "100%", maxHeight: "100%" }, modalScroll: { flexGrow: 1, justifyContent: "center" },
+  modalCard: { alignSelf: "center", width: "100%", maxWidth: 460, borderWidth: 1, borderRadius: 16, padding: 22, gap: 14 },
+  modalClose: { minHeight: 42, alignItems: "center", justifyContent: "center" },
 });
