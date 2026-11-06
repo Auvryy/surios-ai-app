@@ -12,7 +12,7 @@ Open **Map** in the bottom navigation. The map starts around Santa Cruz and fits
 - Numbered pins show canonical severity. Solid colored lines and end circles show reported road sections. Severity, support and operational priority have separate labels.
 - **Legend**, fit, zoom, refresh and foreground GPS controls have tap alternatives. Reports refresh every 30 seconds while active and on return to the app.
 - Select a hazard to view evidence, assessment, source posts and their matching explanations. A resolved hazard can open its linked official resolution; the link is fetched from the source post, not guessed.
-- **Directions** uses the existing backend route service. A returned direct connection is labeled approximate; it is not presented as a road route.
+- **Directions** requests a fresh high-accuracy foreground location, requires a fix accurate to 100 m or better, and sends that explicit origin to the backend route service. Denied, timed-out or imprecise location fails honestly. Estimated straight-line fallback is rejected rather than drawn as navigation. The full returned road polyline, including bends, is retained.
 - The camera beside **Legend** opens the same composer as the center **Post** action. **Share an update** in hazard details starts a new report at that location.
 - **View on hazard map** in a feed post opens its canonical hazard. Older hazards outside the latest snapshot are loaded individually.
 
@@ -56,7 +56,7 @@ The controls, sheets, form, gallery and navigation use React Native primitives w
 
 Only the map canvas uses a local Leaflet document. Android/iOS render it through `react-native-webview`; browser preview uses a sandboxed iframe. Both use the same local document and typed message protocol. The bridge receives map geometry/commands only: never session tokens, credentials, API URLs or uploaded file contents. Incoming events are validated, and browser events must originate from the owned iframe. External top-level navigation and local file access are disabled on native.
 
-Leaflet JS/CSS and its license are bundled under `assets/map`; executable code is not downloaded from a CDN. `npm run map:bundle` regenerates them from the pinned dependency. Reference roads contain website geometry/names only; illustrative legacy PCI/condition data was deliberately excluded. Tiles require an internet connection and visible OpenStreetMap attribution. No map API key, paid minimal-map style, bulk tile download or offline tile cache is added.
+Leaflet JS/CSS and its license are bundled under `assets/map`; executable code is not downloaded from a CDN. `npm run map:bundle` regenerates them from the pinned dependency. The reference-road layer loads nearby OpenStreetMap way geometry from `/api/roads` around the current map center, with debounced and cancelled lookups during panning. It no longer uses the bundled illustrative corridor lines. Saved report road sections retain their original way vertices. Tiles require an internet connection and visible OpenStreetMap attribution. No map API key, paid minimal-map style, bulk tile download or offline tile cache is added.
 
 ## Verification
 
