@@ -36,6 +36,7 @@ export function useSession() {
   }, [controller]);
   return { ...state, authenticate: controller.authenticate, signOut: controller.signOut,
     retry: controller.restore, cancelAuthentication: controller.cancelAuthentication,
+    resendVerification: controller.resendVerification, confirmVerification: controller.confirmVerification,
     request,
   };
 }

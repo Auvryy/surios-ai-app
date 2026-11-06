@@ -68,22 +68,29 @@ verification created and revoked its own session without creating accounts or po
    credential through `GET /api/auth/session` before opening authenticated screens.
 2. Sign-in sends JSON `{ email, password }` to `POST /api/auth/login`. Registration
    sends `{ name, email, password, confirmPassword }` to `POST /api/auth/register`.
-   The mobile registration form creates citizen accounts; government registration
-   and administration remain on the website.
-3. The backend validates the account and returns an opaque `accessToken`,
+   The backend stores a pending registration, emails a 6-digit code, and returns
+   `{ verificationRequired: true, email }`. Enter the code in the app; the backend
+   creates the account only after `POST /api/auth/verification/confirm` accepts
+   it and returns a signed-in session. The app can request a fresh code through
+   `POST /api/auth/verification/resend`. Government registration and administration
+   remain on the website.
+3. After email verification, the response contains an opaque `accessToken`,
    `tokenType: "Bearer"`, `expiresAt`, and safe own-account `user` details.
-4. The app validates the response and saves the credential before considering
+4. The app validates the sign-in response and saves the credential before considering
    sign-in successful. It never saves the password. Storage failure revokes the
-   newly issued session and shows a retryable error. Signup may still have created
-   the account; that case is explicitly explained to the user.
+   newly issued session and shows a retryable error. The verified account can
+   still sign in later if device storage is unavailable.
 5. Active accounts open the saved community feed. Pending/rejected government
    accounts see their actual approval state and can retry or sign out; no feature
    requests are sent before approval.
-6. API reads attach `Authorization: Bearer <accessToken>`. The feed replaces the
+6. Sign-in and Settings offer password recovery with a 6-digit email code. The
+   code and new password are submitted to `POST /api/auth/reset-password`; a
+   successful reset revokes existing sessions and asks the user to sign in again.
+7. API reads attach `Authorization: Bearer <accessToken>`. The feed replaces the
    collection on cumulative page loads, refreshes on request and renders server
    data only. Current shared hazard status and official resolution links come
    from the backend. Full posts/discussions open in-app; see [DISCUSSIONS.md](DISCUSSIONS.md).
-7. Logout calls `POST /api/auth/logout` to revoke the current session, then clears
+8. Logout calls `POST /api/auth/logout` to revoke the current session, then clears
    device storage. A 401 also clears the session. During a network outage, logout
    clears this device and explicitly states that remote revocation could not be
    confirmed. A device-storage failure is shown rather than hidden.

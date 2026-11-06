@@ -336,7 +336,7 @@ test("filters and layers apply canonical statuses and keep report list usable", 
     .click();
   await expect(
     page.getByText(
-      "Dashed lines show named road corridors for context. They do not indicate measured condition.",
+      "Dashed lines follow nearby OpenStreetMap road geometry. They do not indicate measured condition.",
     ),
   ).toBeVisible();
   expect(errors).toEqual([]);
@@ -1170,4 +1170,39 @@ test("post gallery shows the saved cover, switches thumbnails and maps, and open
   expect(create!.x - map!.x).toBeLessThan(80);
   expect(updates!.x - create!.x).toBeLessThan(80);
   expect(errors).toEqual([]);
+});
+
+
+test("map directions send the current user location and keep full road geometry", async ({ page, context }) => {
+  await context.grantPermissions(["geolocation"]);
+  await context.setGeolocation({ latitude: 14.29, longitude: 121.42, accuracy: 10 });
+  let routeUrl: URL | undefined;
+  const errors = await setup(page, async (route, path) => {
+    if (path !== "/api/route") return false;
+    routeUrl = new URL(route.request().url());
+    await json(route, { route: { coordinates: [[14.29,121.42],[14.288,121.42],[14.288,121.4173],[14.2813,121.4173]], estimated: false, originName: "Your current location", distanceFormatted: "1.2 km", durationFormatted: "4 min" } });
+    return true;
+  });
+  await page.getByRole("button", { name: "Map", exact: true }).click();
+  const frame = page.frameLocator('iframe[title="Hazard map"]');
+  await frame.locator(".hazard-pin").click();
+  await page.getByRole("button", { name: "Open hazard: Demo drain report", exact: true }).click();
+  await page.getByRole("button", { name: "Directions", exact: true }).click();
+  await expect(page.getByText("Directions from Your current location", { exact: true })).toBeVisible();
+  expect(routeUrl?.searchParams.get("originLat")).toBe("14.29");
+  expect(routeUrl?.searchParams.get("originLng")).toBe("121.42");
+  expect(routeUrl?.searchParams.get("destLat")).toBe("14.2813");
+  expect(errors).toEqual([]);
+});
+
+test("denied GPS never requests directions from a substitute origin", async ({ page, context }) => {
+  await context.clearPermissions();
+  let routed = false;
+  await setup(page, async (_route, path) => { if (path === "/api/route") routed = true; return false; });
+  await page.getByRole("button", { name: "Map", exact: true }).click();
+  await page.frameLocator('iframe[title="Hazard map"]').locator(".hazard-pin").click();
+  await page.getByRole("button", { name: "Open hazard: Demo drain report", exact: true }).click();
+  await page.getByRole("button", { name: "Directions", exact: true }).click();
+  await expect(page.getByText("Directions need your current location. Allow precise location in Settings and try again.", { exact: true })).toBeVisible();
+  expect(routed).toBe(false);
 });

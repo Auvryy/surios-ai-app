@@ -42,10 +42,10 @@ import {
   type MapRoute,
   type MapSnapshot,
 } from "@/lib/map-data";
-import { humanize, statusLabel } from "@/lib/report-contracts";
+import { humanize, parseRoads, statusLabel } from "@/lib/report-contracts";
 import { SANTA_CRUZ, type Coordinate, type RoadWay } from "@/lib/roads";
 import { currentLocation } from "@/reporting/location";
-import referenceRoads from "@/assets/map/reference-roads.json";
+
 import { AssessmentDetails } from "./assessment-details";
 import { StreetMap } from "./street-map";
 import type { MapEvent, MapFocus } from "./map-protocol";
@@ -69,6 +69,8 @@ export function HazardMap({
   >(null);
   const [selectedId, setSelectedId] = useState(""),
     [clusterIds, setClusterIds] = useState<string[]>([]);
+  const [referenceRoads, setReferenceRoads] = useState<RoadWay[]>([]);
+  const [mapCenter, setMapCenter] = useState<Coordinate>(SANTA_CRUZ);
   const [reference, setReference] = useState(false),
     [tilesError, setTilesError] = useState(false);
   const [focus, setFocus] = useState<MapFocus | undefined>();
@@ -177,6 +179,16 @@ export function HazardMap({
       resolutionPending.current?.abort();
     };
   }, [fetchData]);
+  useEffect(() => {
+    if (!reference) return;
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      void request(`/api/roads?lat=${mapCenter[0]}&lng=${mapCenter[1]}`, { signal: controller.signal, timeoutMs: 45000 })
+        .then((response) => { if (!controller.signal.aborted) setReferenceRoads(parseRoads(response)); })
+        .catch(() => { if (!controller.signal.aborted) setError("Nearby road geometry is unavailable. Move the map or toggle the road layer to retry."); });
+    }, 600);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [reference, mapCenter, request]);
   const refresh = () => {
     if (!pending.current) {
       setLoading(true);
@@ -206,6 +218,10 @@ export function HazardMap({
     setClusterIds([]);
   };
   const event = (event: MapEvent) => {
+    if (event.type === "center") {
+      if (mapCenter[0] !== event.point[0] || mapCenter[1] !== event.point[1]) { setReferenceRoads([]); setMapCenter(event.point); }
+      return;
+    }
     if (event.type === "tiles-unavailable") setTilesError(true);
     if (event.type !== "select") return;
     const ids = event.ids.filter((id) => filtered.some((h) => h.id === id));
@@ -294,11 +310,14 @@ export function HazardMap({
     routePending.current?.abort();
     routePending.current = controller;
     setRouting(true);
+    setRoute(null);
     setLinkError("");
     try {
+      const origin = await currentLocation(true);
+      if (controller.signal.aborted || !alive.current || selectedRef.current !== hazard.id) return;
       const result = parseMapRoute(
         await request(
-          `/api/route?destLat=${hazard.latitude}&destLng=${hazard.longitude}&name=${encodeURIComponent(hazard.title)}`,
+          `/api/route?destLat=${hazard.latitude}&destLng=${hazard.longitude}&name=${encodeURIComponent(hazard.title)}&originLat=${origin[0]}&originLng=${origin[1]}&originName=${encodeURIComponent("Your current location")}`,
           { signal: controller.signal, timeoutMs: 45000 },
         ),
       );
@@ -331,7 +350,7 @@ export function HazardMap({
               roadSegment,
             }),
           ),
-          referenceRoads: reference ? (referenceRoads as RoadWay[]) : [],
+          referenceRoads: reference ? referenceRoads : [],
           focus,
           route: route?.coordinates,
           routeEstimated: route?.estimated,
@@ -556,10 +575,10 @@ export function HazardMap({
           <Toggle
             label="Reference roads"
             value={reference}
-            onChange={setReference}
+            onChange={(value) => { setReferenceRoads([]); setReference(value); }}
           />
           <Text style={[ui.body, { color: colors.muted }]}>
-            Dashed lines show named road corridors for context. They do not
+            Dashed lines follow nearby OpenStreetMap road geometry. They do not
             indicate measured condition.
           </Text>
           <Text style={[ui.caption, { color: colors.muted }]}>

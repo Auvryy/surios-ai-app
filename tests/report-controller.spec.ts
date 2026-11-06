@@ -13,6 +13,7 @@ import {
   filterHazards,
   emptyMapFilters,
   parseMapSnapshot,
+  parseMapRoute,
 } from "../src/lib/map-data";
 import {
   MIN_ROAD_METERS,
@@ -449,4 +450,11 @@ test("development effect replay leaves the composer active", async () => {
   );
   expect(controller.getSnapshot().busy).toBeNull();
   expect(calls.filter((c) => c.path.endsWith("/assess"))).toHaveLength(1);
+});
+
+
+test("directions preserve road bends and reject estimated straight-line fallback", () => {
+  const coordinates = [[14.28, 121.41], [14.281, 121.411], [14.282, 121.411], [14.283, 121.414]];
+  expect(parseMapRoute({ route: { coordinates, estimated: false, originName: "Your current location" } }).coordinates).toEqual(coordinates);
+  expect(() => parseMapRoute({ route: { coordinates: [coordinates[0], coordinates[3]], estimated: true } })).toThrow(/straight line/);
 });

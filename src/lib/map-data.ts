@@ -173,11 +173,13 @@ export function parseMapRoute(v: unknown): MapRoute {
     v.route.coordinates.length < 2
   )
     throw invalid();
+  if (v.route.estimated === true)
+    throw new ApiError("Road directions are unavailable. Please try again; a straight line is not a navigable route.");
   return {
     coordinates: v.route.coordinates,
     estimated: v.route.estimated === true,
     distance: String(v.route.distanceFormatted || ""),
     duration: String(v.route.durationFormatted || ""),
-    origin: String(v.route.originName || "Municipal depot"),
+    origin: String(v.route.originName || "Your current location"),
   };
 }

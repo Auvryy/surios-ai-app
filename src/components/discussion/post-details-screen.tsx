@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  Platform,
   ActivityIndicator,
   FlatList,
   Pressable,
@@ -333,7 +334,7 @@ export function PostDetailsScreen({
             )}
             {!!message && (
               <Text
-                accessibilityRole="status"
+                role={Platform.OS === "web" ? "status" : undefined}
                 accessibilityLiveRegion="polite"
                 style={[ui.body, { color: colors.primary }]}
               >

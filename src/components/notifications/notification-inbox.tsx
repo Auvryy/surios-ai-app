@@ -1,7 +1,7 @@
 import Feather from "@expo/vector-icons/Feather";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState, type ReactElement } from "react";
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSession } from "@/auth/session-provider";
 import { Button, Notice, ui } from "@/components/ui/controls";
 import { useTheme } from "@/constants/theme";
@@ -96,7 +96,7 @@ export function NotificationInbox({ header }: { header: ReactElement }) {
         <Text accessibilityLiveRegion="polite" style={[ui.caption, { color: colors.muted }]}>{unreadLabel(unreadCount)}</Text>
         <Button label="Refresh" icon="refresh-cw" variant="ghost" busy={loading} disabled={reading} onPress={() => { setMessage(""); void load(); }} />
       </View>
-      {!!message && <Text role="status" accessibilityLiveRegion="polite" style={[ui.caption, { color: colors.success }]}>{message}</Text>}
+      {!!message && <Text role={Platform.OS === "web" ? "status" : undefined} accessibilityLiveRegion="polite" style={[ui.caption, { color: colors.success }]}>{message}</Text>}
       {!!error && <View style={ui.group}><Notice error>{error}</Notice><Button label="Retry loading notifications" disabled={loading || reading} onPress={() => void load()} /></View>}
     </View>}
     renderItem={({ item }) => <NotificationRow item={item} disabled={reading} onPress={() => open(item)} />}

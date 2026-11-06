@@ -14,6 +14,10 @@ export type SessionDetails = { user: SessionUser; expiresAt: string };
 export type Session = SessionDetails & { accessToken: string };
 export type Credentials = { email: string; password: string };
 export type Registration = Credentials & { name: string; confirmPassword: string };
+export type VerificationPending = { verificationRequired: true; email: string };
+export function isVerificationPending(value: Session | VerificationPending): value is VerificationPending {
+  return 'verificationRequired' in value && value.verificationRequired === true;
+}
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
@@ -48,4 +52,11 @@ export function parseIssuedSession(value: unknown): Session {
     throw new ApiError('The server did not return a valid sign-in credential. Please try again.');
   }
   return { ...details, accessToken: value.accessToken };
+}
+
+export function parseRegistrationResult(value: unknown): Session | VerificationPending {
+  if (isRecord(value) && value.verificationRequired === true && typeof value.email === 'string' && value.email) {
+    return { verificationRequired: true, email: value.email };
+  }
+  return parseIssuedSession(value);
 }

@@ -33,6 +33,7 @@ import { PostGallery } from "./post-gallery";
 import { feedRequest, type FeedQuery } from "@/lib/feed-filters";
 import { FeedControls } from "./feed-controls";
 import { PostMenu } from "./post-menu";
+import { FeedInteractions } from "./feed-interactions";
 
 export function CommunityFeed({
   header,
@@ -218,18 +219,21 @@ export function PostCard({
       : "Reported";
   if (removed) return null;
   return (
-    <View
+    <Pressable
+      accessibilityRole="link"
+      accessibilityLabel="Open post card"
+      onPress={(event) => { if (event.target === event.currentTarget) void open(item.url); }}
       style={[
         styles.card,
         { borderColor: colors.border, backgroundColor: colors.surface },
       ]}
     >
-      <View style={styles.authorRow}>
+      <View pointerEvents="box-none" style={styles.authorRow}>
         <Pressable accessibilityRole="link" accessibilityLabel={`View profile of ${item.author}`}
           disabled={!validId(item.authorId)} onPress={() => { if (item.authorId) router.push(contributorDestination(item.authorId)); }}
           style={({ pressed }) => [{ flex: 1, minWidth: 0, minHeight: 48, flexDirection: "row", alignItems: "center", gap: 10, opacity: pressed ? 0.7 : 1 }]}>
         <Avatar name={item.author} uri={profileImageUrl(item.authorAvatarUrl, apiOrigin())} size={42} />
-        <View style={styles.authorCopy}>
+        <View pointerEvents="box-none" style={styles.authorCopy}>
           <Text style={[styles.author, { color: colors.text }]}>
             {item.author}
           </Text>
@@ -287,19 +291,20 @@ export function PostCard({
       </Pressable>
       <Text
         accessibilityRole="header"
+        onPress={() => void open(item.url)}
         style={[styles.title, { color: colors.text }]}
       >
         {item.title}
       </Text>
       {!!item.body && (
-        <Text style={[styles.body, { color: colors.text }]} numberOfLines={5}>
+        <Text onPress={() => void open(item.url)} style={[styles.body, { color: colors.text }]} numberOfLines={5}>
           {item.body}
         </Text>
       )}
       <PostGallery key={`${item.id}:${item.coverId}`} media={item.media} coverId={item.coverId} point={item.point} roadSegment={item.roadSegment} title={item.title}
         onMap={item.reportId ? () => onMap(item.reportId!) : undefined} />
       {item.originalTitle && (
-        <View style={[styles.quote, { borderColor: colors.border }]}>
+        <View pointerEvents="box-none" style={[styles.quote, { borderColor: colors.border }]}>
           <Text style={[styles.meta, { color: colors.muted }]}>
             Original report
           </Text>
@@ -320,6 +325,7 @@ export function PostCard({
           onPress={() => onMap(item.reportId!)}
         />
       )}
+      <FeedInteractions item={item} onOpen={() => void open(item.url)} />
       <Pressable
         accessibilityRole="link"
         accessibilityLabel="Open post"
@@ -348,7 +354,7 @@ export function PostCard({
           {linkError}
         </Text>
       )}
-    </View>
+    </Pressable>
   );
 }
 

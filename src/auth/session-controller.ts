@@ -1,10 +1,12 @@
 import { ApiError } from '../lib/api-client';
-import type { Credentials, Registration, Session, SessionDetails } from './contracts';
+import { isVerificationPending, type Credentials, type Registration, type Session, type SessionDetails, type VerificationPending } from './contracts';
 import type { TokenStorage } from './stored-session';
 
 type AuthApi = {
   login: (input: Credentials, signal: AbortSignal) => Promise<Session>;
-  register: (input: Registration, signal: AbortSignal) => Promise<Session>;
+  register: (input: Registration, signal: AbortSignal) => Promise<Session | VerificationPending>;
+  confirmVerification?: (email: string, code: string, signal: AbortSignal) => Promise<Session>;
+  resendVerification?: (email: string, signal: AbortSignal) => Promise<string>;
   session: (token: string, signal: AbortSignal) => Promise<SessionDetails>;
   logout: (token: string) => Promise<void>;
 };
@@ -64,13 +66,18 @@ export class SessionController {
     }
   };
 
-  authenticate = async (mode: 'login' | 'register', input: Registration | Credentials) => {
+  authenticate = async (mode: 'login' | 'register', input: Registration | Credentials): Promise<VerificationPending | void> => {
     if (this.state.busy) return;
     const { revision, signal } = this.begin();
     this.update({ ...this.state, busy: true, notice: null });
-    let issued: Session | null = null;
     try {
-      issued = mode === 'login' ? await this.api.login(input, signal) : await this.api.register(input as Registration, signal);
+      const result = mode === 'login' ? await this.api.login(input, signal) : await this.api.register(input as Registration, signal);
+      if (isVerificationPending(result)) {
+        if (revision !== this.revision) return;
+        this.update({ status: 'signedOut', session: null, busy: false, notice: null });
+        return result;
+      }
+      const issued = result;
       if (revision !== this.revision) { await this.api.logout(issued.accessToken).catch(() => {}); return; }
       const token = issued.accessToken;
       try {
@@ -93,6 +100,37 @@ export class SessionController {
       this.update({ status: 'signedOut', session: null, busy: false, notice: null });
       throw error;
     }
+  };
+
+  confirmVerification = async (email: string, code: string) => {
+    if (this.state.busy) return;
+    if (!this.api.confirmVerification) throw new ApiError('Email verification is unavailable on this server.');
+    const { revision, signal } = this.begin();
+    this.update({ status: 'signedOut', session: null, busy: true, notice: null });
+    try {
+      const issued = await this.api.confirmVerification(email, code, signal);
+      if (revision !== this.revision) { await this.api.logout(issued.accessToken).catch(() => {}); return; }
+      try {
+        await this.persist(async () => {
+          if (revision !== this.revision) return;
+          await this.storage.write(issued.accessToken);
+          if (revision !== this.revision) await this.storage.clear();
+        });
+      } catch {
+        await this.api.logout(issued.accessToken).catch(() => {});
+        throw new ApiError('Your account was created, but sign-in could not be saved on this device. Open Sign in and try again.');
+      }
+      if (revision === this.revision) this.update({ status: 'signedIn', session: issued, busy: false, notice: null });
+    } catch (error) {
+      if (revision === this.revision) this.update({ status: 'signedOut', session: null, busy: false, notice: null });
+      throw error;
+    }
+  };
+
+  resendVerification = async (email: string) => {
+    if (!this.api.resendVerification) throw new ApiError('Email verification is unavailable on this server.');
+    const controller = new AbortController();
+    return this.api.resendVerification(email, controller.signal);
   };
 
   signOut = async () => {
