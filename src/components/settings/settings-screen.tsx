@@ -130,7 +130,7 @@ export function SettingsScreen({ onBack }: { onBack: () => void }) {
   const response = (section: Operation) => {
     const result = feedback[section];
     return result.error ? <Notice error>{result.error}</Notice> : result.message ?
-      <Text role="status" accessibilityLiveRegion="polite" style={[ui.body, { color: colors.success }]}>{result.message}</Text> : null;
+      <Text role={Platform.OS === "web" ? "status" : undefined} accessibilityLiveRegion="polite" style={[ui.body, { color: colors.success }]}>{result.message}</Text> : null;
   };
 
   return <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.flex}>
